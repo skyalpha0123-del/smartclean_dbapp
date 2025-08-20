@@ -92,7 +92,7 @@ const DataTable = () => {
   return (
     <div className="data-table-container">
       <div className="table-header">
-        <h2>Data Records</h2>
+        <h2>Analytics Data</h2>
         <div className="table-controls">
           <div className="search-box">
             <input

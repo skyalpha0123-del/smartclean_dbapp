@@ -6,40 +6,43 @@ const InfoSection = () => {
     <div className="info-section">
       <div className="info-container">
         <div className="info-header">
-          <div className="logo-container">
-            <img src="/sc_logo.webp" alt="SmartClean Logo" className="company-logo" />
+          <div className="header-left">
+            <div className="title-icon">📈</div>
+            <h1 className="section-title">Analytics Overview</h1>
           </div>
-          <div className="company-info">
-            <h1 className="company-name">SmartClean</h1>
-            <p className="company-description">Professional Cleaning Services</p>
-            <div className="company-details">
-              <div className="detail-item">
-                <span className="detail-label">Established:</span>
-                <span className="detail-value">2020</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Services:</span>
-                <span className="detail-value">Residential & Commercial</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Coverage:</span>
-                <span className="detail-value">Greater Stockholm Area</span>
-              </div>
-            </div>
+          <div className="header-right">
+            <div className="status-badge">Online</div>
+            <div className="summary-text">Total Sessions: 0 | User Engagement: 0% repeat rate</div>
           </div>
         </div>
-        <div className="info-stats">
-          <div className="stat-item">
-            <div className="stat-number">500+</div>
-            <div className="stat-label">Happy Clients</div>
+        
+        <div className="metrics-grid">
+          <div className="metric-card">
+            <div className="metric-icon">👥</div>
+            <div className="metric-label">Total Users</div>
+            <div className="metric-value">0</div>
+            <div className="metric-description">Registered users</div>
           </div>
-          <div className="stat-item">
-            <div className="stat-number">1000+</div>
-            <div className="stat-label">Cleanings Completed</div>
+          
+          <div className="metric-card">
+            <div className="metric-icon">⏰</div>
+            <div className="metric-label">Active Queue</div>
+            <div className="metric-value">0</div>
+            <div className="metric-description">Currently in queue</div>
           </div>
-          <div className="stat-item">
-            <div className="stat-number">4.9</div>
-            <div className="stat-label">Customer Rating</div>
+          
+          <div className="metric-card">
+            <div className="metric-icon">🔄</div>
+            <div className="metric-label">Repeat Users</div>
+            <div className="metric-value">0</div>
+            <div className="metric-description">Multiple sessions</div>
+          </div>
+          
+          <div className="metric-card">
+            <div className="metric-icon">📊</div>
+            <div className="metric-label">Avg Sessions</div>
+            <div className="metric-value">0</div>
+            <div className="metric-description">Per user</div>
           </div>
         </div>
       </div>
