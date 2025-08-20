@@ -6,7 +6,6 @@ import Login from './components/Login';
 import InfoSection from './components/InfoSection';
 import DataTable from './components/DataTable';
 import ProtectedRoute from './components/ProtectedRoute';
-import ErrorBoundary from './components/ErrorBoundary';
 
 // Simple header with logout button
 const SimpleHeader = () => {
@@ -29,8 +28,6 @@ const SimpleHeader = () => {
 
 // Main app content wrapper
 const AppContent = () => {
-  console.log('AppContent rendering...');
-  
   return (
     <div className="App">
       <Routes>
@@ -46,36 +43,19 @@ const AppContent = () => {
             </div>
           </ProtectedRoute>
         } />
-        <Route path="/debug" element={
-          <div style={{ padding: '20px', textAlign: 'center' }}>
-            <h1>Debug Route</h1>
-            <p>If you can see this, routing is working.</p>
-            <a href="/login">Go to Login</a>
-          </div>
-        } />
-        <Route path="*" element={
-          <div style={{ padding: '20px', textAlign: 'center' }}>
-            <h1>Route Not Found</h1>
-            <p>Redirecting to home...</p>
-            <Navigate to="/" replace />
-          </div>
-        } />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   );
 };
 
 function App() {
-  console.log('App component rendering...');
-  
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </AuthProvider>
-    </ErrorBoundary>
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
   );
 }
 

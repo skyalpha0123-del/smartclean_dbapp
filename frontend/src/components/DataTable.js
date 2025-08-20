@@ -20,7 +20,21 @@ const DataTable = () => {
     try {
       setLoading(true);
       const response = await axios.get('/api/users');
-      setData(response.data.data || []);
+      // Ensure data is properly formatted and handle null values
+      const userData = response.data.data || [];
+      console.log('Raw user data:', userData); // Debug log
+      
+      const sanitizedData = userData.map(user => ({
+        id: user._id || user.id || null,
+        name: user.name || '',
+        email: user.email || '',
+        startSessionTime: user.startSessionTime || null,
+        endSessionTime: user.endSessionTime || null,
+        createdAt: user.createdAt || null
+      }));
+      
+      console.log('Sanitized data:', sanitizedData); // Debug log
+      setData(sanitizedData);
       setError(null);
     } catch (err) {
       setError('Failed to fetch data. Please try again.');
@@ -42,18 +56,28 @@ const DataTable = () => {
   const getSortedData = () => {
     let filteredData = data.filter(item => {
       // Text filter
-      const matchesText = Object.values(item).some(value =>
-        value.toString().toLowerCase().includes(filterText.toLowerCase())
-      );
+      const matchesText = Object.values(item).some(value => {
+        // Handle null/undefined values safely
+        if (value === null || value === undefined) {
+          return false;
+        }
+        return value.toString().toLowerCase().includes(filterText.toLowerCase());
+      });
 
       // Date filter
       let matchesDate = true;
       if (startDate || endDate) {
-        const itemDate = new Date(item.createdAt);
-        if (startDate && itemDate < new Date(startDate)) {
-          matchesDate = false;
-        }
-        if (endDate && itemDate > new Date(endDate + 'T23:59:59')) {
+        // Only apply date filter if createdAt exists
+        if (item.createdAt) {
+          const itemDate = new Date(item.createdAt);
+          if (startDate && itemDate < new Date(startDate)) {
+            matchesDate = false;
+          }
+          if (endDate && itemDate > new Date(endDate + 'T23:59:59')) {
+            matchesDate = false;
+          }
+        } else {
+          // If no createdAt, don't match date filters
           matchesDate = false;
         }
       }
@@ -64,6 +88,10 @@ const DataTable = () => {
     return filteredData.sort((a, b) => {
       let aValue = a[sortField];
       let bValue = b[sortField];
+
+      // Handle null/undefined values in sorting
+      if (aValue === null || aValue === undefined) aValue = '';
+      if (bValue === null || bValue === undefined) bValue = '';
 
       if (typeof aValue === 'string') {
         aValue = aValue.toLowerCase();
@@ -185,8 +213,8 @@ const DataTable = () => {
             <tbody>
               {sortedData.map((item) => (
                 <tr key={item.id || item._id}>
-                  <td>{item.name}</td>
-                  <td>{item.email}</td>
+                  <td>{item.name || 'N/A'}</td>
+                  <td>{item.email || 'N/A'}</td>
                   <td>
                     {item.startSessionTime ? new Date(item.startSessionTime).toLocaleString() : 'Not started'}
                   </td>
