@@ -11,8 +11,6 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
-goals.txt
-
 # Production builds
 frontend/build/
 frontend/dist/
@@ -22,6 +20,9 @@ backend/data/
 *.db
 *.sqlite
 *.sqlite3
+
+# MongoDB
+*.lock
 
 # Logs
 logs

@@ -1,0 +1,4 @@
+- Domo credentials must not be shown in UI
+- primary color should be light green
+- add database connection in backend
+- now, UI should be empty, display nothing.
