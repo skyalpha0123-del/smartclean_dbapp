@@ -77,8 +77,8 @@ async function insertDemoUser() {
     }
 
     const totalUsers = await User.countDocuments();
-    if (totalUsers <= 1) {
-      console.log('⚠️  Database has few users, adding 50 mock users for testing');
+    if (totalUsers < 50) {
+      console.log(`⚠️  Database has ${totalUsers} users, adding ${50 - totalUsers} mock users for testing`);
       
       const mockUsers = [];
       const names = [
@@ -97,7 +97,8 @@ async function insertDemoUser() {
         'Edward Torres', 'Natalie Peterson'
       ];
       
-      for (let i = 0; i < 50; i++) {
+      const usersToCreate = 50 - totalUsers;
+      for (let i = 0; i < usersToCreate; i++) {
         const isActive = Math.random() > 0.7;
         const hasStartTime = Math.random() > 0.2;
         const hasEndTime = hasStartTime && Math.random() > 0.3;
@@ -107,7 +108,7 @@ async function insertDemoUser() {
         
         mockUsers.push({
           name: names[i],
-          email: `user${i + 1}@example.com`,
+          email: `user${totalUsers + i + 1}@example.com`,
           password: bcrypt.hashSync('password123', 10),
           startTime: startTime,
           endTime: endTime,
