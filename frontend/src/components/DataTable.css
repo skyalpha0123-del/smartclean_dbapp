@@ -150,7 +150,7 @@
   vertical-align: middle;
 }
 
-/* Empty State */
+
 .empty-state {
   padding: 60px 30px;
   text-align: center;
@@ -175,7 +175,7 @@
   font-size: 1rem;
 }
 
-/* Loading and Error States */
+
 .loading-container,
 .error-container {
   padding: 60px 30px;
@@ -198,7 +198,7 @@
   color: var(--text-secondary);
 }
 
-/* Responsive Design */
+
 @media (max-width: 768px) {
   .table-header {
     padding: 20px;

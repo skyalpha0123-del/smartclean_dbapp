@@ -114,7 +114,7 @@
   margin: 0;
 }
 
-/* Responsive Design */
+
 @media (max-width: 768px) {
   .info-header {
     flex-direction: column;

@@ -12,7 +12,7 @@ code {
     monospace;
 }
 
-/* CSS Variables for consistent theming */
+
 :root {
   --primary-color: #4CAF50;
   --primary-hover: #45a049;

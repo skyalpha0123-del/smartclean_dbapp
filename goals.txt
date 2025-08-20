@@ -1,8 +1,4 @@
-- make mock datas have some repeat emails
-- repeat users means count of emails that exist in database at least twice
-- start sessoion time must be exist.
-- don't need to show created in table and if end time is null, it should display nothing in end time field of table
-- Place sr_robot_log.png file in frontend/public in the header beside of SmartClean
-- I want to add pagination in table
+- in mock data, start sessoion time should be exist for all emails.
+- in mock data, some emails should be repeated at least twice.
 
 - remove all comments.

@@ -116,7 +116,7 @@ async function insertDemoUser() {
         });
       }
       
-      const repeatEmailsCount = Math.floor(usersToCreate * 0.4);
+      const repeatEmailsCount = Math.floor(usersToCreate * 0.6);
       for (let i = 0; i < repeatEmailsCount; i++) {
         const baseUser = mockUsers[i];
         if (baseUser.startTime) {
@@ -129,6 +129,24 @@ async function insertDemoUser() {
             password: baseUser.password,
             startTime: repeatStartTime,
             endTime: repeatEndTime,
+            isActive: false
+          });
+        }
+      }
+      
+      const additionalRepeatEmailsCount = Math.floor(usersToCreate * 0.3);
+      for (let i = 0; i < additionalRepeatEmailsCount; i++) {
+        const baseUser = mockUsers[i + repeatEmailsCount];
+        if (baseUser && baseUser.startTime) {
+          const secondRepeatStartTime = new Date(baseUser.startTime.getTime() + (48 * 60 * 60 * 1000));
+          const sessionDuration = Math.random() * 4 * 60 * 1000;
+          const secondRepeatEndTime = new Date(secondRepeatStartTime.getTime() + sessionDuration);
+          
+          mockUsers.push({
+            email: baseUser.email,
+            password: baseUser.password,
+            startTime: secondRepeatStartTime,
+            endTime: secondRepeatEndTime,
             isActive: false
           });
         }

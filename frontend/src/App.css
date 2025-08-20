@@ -1,4 +1,4 @@
-/* Global Styles */
+
 * {
   margin: 0;
   padding: 0;
@@ -22,7 +22,7 @@ body {
   flex-direction: column;
 }
 
-/* Simple Header */
+
 .simple-header {
   background-color: var(--bg-primary);
   box-shadow: var(--shadow);
@@ -83,7 +83,7 @@ body {
   padding: 0 20px;
 }
 
-/* Button Styles */
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -149,7 +149,7 @@ body {
   font-weight: bold;
 }
 
-/* Loading Spinner */
+
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -183,7 +183,7 @@ body {
   100% { transform: rotate(360deg); }
 }
 
-/* Error Container */
+
 .error-container {
   display: flex;
   align-items: center;
@@ -207,7 +207,7 @@ body {
   color: #6c757d;
 }
 
-/* Responsive Design */
+
 @media (max-width: 768px) {
   .main-content {
     padding: 15px;
