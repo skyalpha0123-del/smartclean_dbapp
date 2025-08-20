@@ -11,6 +11,8 @@ const DataTable = () => {
   const [endDate, setEndDate] = useState('');
   const [sortField, setSortField] = useState('email');
   const [sortDirection, setSortDirection] = useState('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchData();
@@ -27,8 +29,7 @@ const DataTable = () => {
         id: user._id || user.id || null,
         email: user.email || '',
         startTime: user.startTime || null,
-        endTime: user.endTime || null,
-        createdAt: user.createdAt || null
+        endTime: user.endTime || null
       }));
       
       console.log('Sanitized data:', sanitizedData);
@@ -66,20 +67,20 @@ const DataTable = () => {
         return value.toString().toLowerCase().includes(filterText.toLowerCase());
       });
 
-      let matchesDate = true;
-      if (startDate || endDate) {
-        if (item.createdAt) {
-          const itemDate = new Date(item.createdAt);
-          if (startDate && itemDate < new Date(startDate)) {
-            matchesDate = false;
-          }
-          if (endDate && itemDate > new Date(endDate + 'T23:59:59')) {
-            matchesDate = false;
-          }
-        } else {
-          matchesDate = false;
-        }
-      }
+                   let matchesDate = true;
+             if (startDate || endDate) {
+               if (item.startTime) {
+                 const itemDate = new Date(item.startTime);
+                 if (startDate && itemDate < new Date(startDate)) {
+                   matchesDate = false;
+                 }
+                 if (endDate && itemDate > new Date(endDate + 'T23:59:59')) {
+                   matchesDate = false;
+                 }
+               } else {
+                 matchesDate = false;
+               }
+             }
 
       return matchesText && matchesDate;
     });
@@ -111,6 +112,7 @@ const DataTable = () => {
     setFilterText('');
     setStartDate('');
     setEndDate('');
+    setCurrentPage(1);
   };
 
   if (loading) {
@@ -136,47 +138,64 @@ const DataTable = () => {
     );
   }
 
-  const sortedData = getSortedData();
+           const sortedData = getSortedData();
+         const totalPages = Math.ceil(sortedData.length / itemsPerPage);
+         const startIndex = (currentPage - 1) * itemsPerPage;
+         const endIndex = startIndex + itemsPerPage;
+         const currentData = sortedData.slice(startIndex, endIndex);
 
-  return (
+         const handlePageChange = (page) => {
+           setCurrentPage(page);
+         };
+
+         return (
     <div className="data-table-container">
       <div className="table-header">
         <h2>Analytics Data</h2>
         <div className="table-controls">
           <div className="filters-section">
             <div className="search-box">
-              <input
-                type="text"
-                placeholder="Search all fields..."
-                value={filterText}
-                onChange={(e) => setFilterText(e.target.value)}
-                className="search-input"
-              />
+                               <input
+                   type="text"
+                   placeholder="Search all fields..."
+                   value={filterText}
+                   onChange={(e) => {
+                     setFilterText(e.target.value);
+                     setCurrentPage(1);
+                   }}
+                   className="search-input"
+                 />
               <span className="search-icon">🔍</span>
             </div>
             <div className="date-filters">
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="date-input"
-                placeholder="Start Date"
-              />
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="date-input"
-                placeholder="End Date"
-              />
+                             <input
+                 type="date"
+                 value={startDate}
+                 onChange={(e) => {
+                   setStartDate(e.target.value);
+                   setCurrentPage(1);
+                 }}
+                 className="date-input"
+                 placeholder="Start Date"
+               />
+               <input
+                 type="date"
+                 value={endDate}
+                 onChange={(e) => {
+                   setEndDate(e.target.value);
+                   setCurrentPage(1);
+                 }}
+                 className="date-input"
+                 placeholder="End Date"
+               />
               <button onClick={clearFilters} className="btn btn-secondary btn-small">
                 Clear Filters
               </button>
             </div>
           </div>
-          <div className="table-info">
-            <span>Showing {sortedData.length} of {data.length} records</span>
-          </div>
+                           <div className="table-info">
+                   <span>Showing {startIndex + 1}-{Math.min(endIndex, sortedData.length)} of {sortedData.length} records</span>
+                 </div>
         </div>
       </div>
 
@@ -197,31 +216,57 @@ const DataTable = () => {
                 <th onClick={() => handleSort('startTime')} className="sortable">
                   Start Time {renderSortIcon('startTime')}
                 </th>
-                <th onClick={() => handleSort('endTime')} className="sortable">
-                  End Time {renderSortIcon('endTime')}
-                </th>
-                <th onClick={() => handleSort('createdAt')} className="sortable">
-                  Created {renderSortIcon('createdAt')}
-                </th>
+                                 <th onClick={() => handleSort('endTime')} className="sortable">
+                   End Time {renderSortIcon('endTime')}
+                 </th>
               </tr>
             </thead>
                                <tbody>
-                     {sortedData.map((item) => (
+                     {currentData.map((item) => (
                        <tr key={item.id || item._id}>
                          <td>{item.email || 'N/A'}</td>
                   <td>
                     {item.startTime ? new Date(item.startTime).toLocaleString() : 'Not started'}
                   </td>
-                  <td>
-                    {item.endTime ? new Date(item.endTime).toLocaleString() : 'Active'}
-                  </td>
-                  <td>
-                    {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A'}
-                  </td>
+                                     <td>
+                     {item.endTime ? new Date(item.endTime).toLocaleString() : ''}
+                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button 
+            onClick={() => handlePageChange(currentPage - 1)} 
+            disabled={currentPage === 1}
+            className="btn btn-secondary btn-small"
+          >
+            Previous
+          </button>
+          
+          <div className="page-numbers">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`btn btn-small ${currentPage === page ? 'btn-primary' : 'btn-secondary'}`}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+          
+          <button 
+            onClick={() => handlePageChange(currentPage + 1)} 
+            disabled={currentPage === totalPages}
+            className="btn btn-secondary btn-small"
+          >
+            Next
+          </button>
         </div>
       )}
     </div>

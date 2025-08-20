@@ -90,26 +90,21 @@ async function insertDemoUser() {
       
       for (let i = 0; i < usersToCreate; i++) {
         const isActive = Math.random() > 0.7;
-        const hasStartTime = Math.random() > 0.2;
-        const hasEndTime = hasStartTime && Math.random() > 0.3;
+        const hasEndTime = Math.random() > 0.3;
         
-        let startTime = null;
+        const randomDays = Math.random() * 20;
+        const randomHours = Math.random() * 24;
+        const randomMinutes = Math.random() * 60;
+        
+        const startTime = new Date(baseDate.getTime() + 
+          (randomDays * 24 * 60 * 60 * 1000) + 
+          (randomHours * 60 * 60 * 1000) + 
+          (randomMinutes * 60 * 1000));
+        
         let endTime = null;
-        
-        if (hasStartTime) {
-          const randomDays = Math.random() * 20;
-          const randomHours = Math.random() * 24;
-          const randomMinutes = Math.random() * 60;
-          
-          startTime = new Date(baseDate.getTime() + 
-            (randomDays * 24 * 60 * 60 * 1000) + 
-            (randomHours * 60 * 60 * 1000) + 
-            (randomMinutes * 60 * 1000));
-          
-          if (hasEndTime) {
-            const sessionDuration = Math.random() * 4 * 60 * 1000;
-            endTime = new Date(startTime.getTime() + sessionDuration);
-          }
+        if (hasEndTime) {
+          const sessionDuration = Math.random() * 4 * 60 * 1000;
+          endTime = new Date(startTime.getTime() + sessionDuration);
         }
         
         mockUsers.push({
@@ -121,10 +116,10 @@ async function insertDemoUser() {
         });
       }
       
-      const repeatUsersCount = Math.floor(usersToCreate * 0.3);
-      for (let i = 0; i < repeatUsersCount; i++) {
+      const repeatEmailsCount = Math.floor(usersToCreate * 0.4);
+      for (let i = 0; i < repeatEmailsCount; i++) {
         const baseUser = mockUsers[i];
-        if (baseUser.startTime && baseUser.endTime) {
+        if (baseUser.startTime) {
           const repeatStartTime = new Date(baseUser.startTime.getTime() + (24 * 60 * 60 * 1000));
           const sessionDuration = Math.random() * 4 * 60 * 1000;
           const repeatEndTime = new Date(repeatStartTime.getTime() + sessionDuration);
@@ -313,7 +308,7 @@ const dbHelpers = {
       });
       
       const usersWithMultipleSessions = await User.aggregate([
-        { $match: { ...demoUserFilter, startTime: { $exists: true, $ne: null } } },
+        { $match: { ...demoUserFilter } },
         { $group: { _id: '$email', sessionCount: { $sum: 1 } } },
         { $match: { sessionCount: { $gte: 2 } } },
         { $count: 'repeatUsers' }

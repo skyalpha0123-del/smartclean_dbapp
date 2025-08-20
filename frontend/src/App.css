@@ -46,6 +46,18 @@ body {
   margin: 0;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
 .user-info {
   display: flex;
   align-items: center;

@@ -13,8 +13,11 @@ const SimpleHeader = () => {
 
   return (
     <header className="simple-header">
-      <div className="header-content">
-        <h1>SmartClean</h1>
+                   <div className="header-content">
+               <div className="header-left">
+                 <img src="/sc_robot_logo.png" alt="SmartClean Logo" className="header-logo" />
+                 <h1>SmartClean</h1>
+               </div>
                        <div className="user-info">
                  <span>Welcome, {user?.email}</span>
                  <button onClick={logout} className="btn btn-secondary btn-small">
