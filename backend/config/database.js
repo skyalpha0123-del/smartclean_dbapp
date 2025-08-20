@@ -75,6 +75,30 @@ async function insertDemoUser() {
     } else {
       console.log('✅ Demo user already exists');
     }
+
+    const totalUsers = await User.countDocuments();
+    if (totalUsers <= 1) {
+      console.log('⚠️  Database has few users, adding test users');
+      await User.create([
+        {
+          name: 'John Doe',
+          email: 'john@example.com',
+          password: bcrypt.hashSync('password123', 10),
+          startTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
+          endTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
+          isActive: false
+        },
+        {
+          name: 'Jane Smith',
+          email: 'jane@example.com',
+          password: bcrypt.hashSync('password123', 10),
+          startTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
+          endTime: null,
+          isActive: true
+        }
+      ]);
+      console.log('✅ Test users created successfully');
+    }
   } catch (error) {
     console.error('❌ Error initializing demo user:', error.message);
   }
