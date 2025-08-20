@@ -70,70 +70,78 @@ async function insertDemoUser() {
       console.log('✅ Demo user already exists');
     }
 
-    const totalUsers = await User.countDocuments();
-    if (totalUsers < 50) {
-      console.log(`⚠️  Database has ${totalUsers} users, adding ${50 - totalUsers} mock users for testing`);
+          const totalUsers = await User.countDocuments();
+      const mockUsersCount = await User.countDocuments({ email: { $regex: /^user\d+@example\.com$/ } });
+      console.log(`🔍 Found ${mockUsersCount} existing mock users`);
       
-      const mockUsers = [];
-      
-      const usersToCreate = 50 - totalUsers;
-      const baseDate = new Date('2025-08-01T00:00:00Z');
-      const endDate = new Date('2025-08-20T23:59:59Z');
-      
-      for (let i = 0; i < usersToCreate; i++) {
-        const isActive = Math.random() > 0.7;
-        const hasStartTime = Math.random() > 0.2;
-        const hasEndTime = hasStartTime && Math.random() > 0.3;
+      if (mockUsersCount === 0 || totalUsers < 50) {
+        if (mockUsersCount > 0) {
+          console.log(`⚠️  Clearing ${mockUsersCount} existing mock users and regenerating`);
+          const deleteResult = await User.deleteMany({ email: { $regex: /^user\d+@example\.com$/ } });
+          console.log(`🗑️  Deleted ${deleteResult.deletedCount} mock users`);
+        }
+                console.log(`⚠️  Generating 50 new mock users with repeat sessions`);
         
-        let startTime = null;
-        let endTime = null;
+        const mockUsers = [];
         
-        if (hasStartTime) {
-          const randomDays = Math.random() * 20;
-          const randomHours = Math.random() * 24;
-          const randomMinutes = Math.random() * 60;
+        const usersToCreate = 50;
+        const baseDate = new Date('2025-08-01T00:00:00Z');
+        const endDate = new Date('2025-08-20T23:59:59Z');
+        
+        for (let i = 0; i < usersToCreate; i++) {
+          const isActive = Math.random() > 0.7;
+          const hasStartTime = Math.random() > 0.2;
+          const hasEndTime = hasStartTime && Math.random() > 0.3;
           
-          startTime = new Date(baseDate.getTime() + 
-            (randomDays * 24 * 60 * 60 * 1000) + 
-            (randomHours * 60 * 60 * 1000) + 
-            (randomMinutes * 60 * 1000));
+          let startTime = null;
+          let endTime = null;
           
-          if (hasEndTime) {
+          if (hasStartTime) {
+            const randomDays = Math.random() * 20;
+            const randomHours = Math.random() * 24;
+            const randomMinutes = Math.random() * 60;
+            
+            startTime = new Date(baseDate.getTime() + 
+              (randomDays * 24 * 60 * 60 * 1000) + 
+              (randomHours * 60 * 60 * 1000) + 
+              (randomMinutes * 60 * 1000));
+            
+            if (hasEndTime) {
+              const sessionDuration = Math.random() * 4 * 60 * 1000;
+              endTime = new Date(startTime.getTime() + sessionDuration);
+            }
+          }
+          
+          mockUsers.push({
+            email: `user${i + 1}@example.com`,
+            password: bcrypt.hashSync('password123', 10),
+            startTime: startTime,
+            endTime: endTime,
+            isActive: isActive
+          });
+        }
+        
+        const repeatUsersCount = Math.floor(usersToCreate * 0.3);
+        for (let i = 0; i < repeatUsersCount; i++) {
+          const baseUser = mockUsers[i];
+          if (baseUser.startTime && baseUser.endTime) {
+            const repeatStartTime = new Date(baseUser.startTime.getTime() + (24 * 60 * 60 * 1000));
             const sessionDuration = Math.random() * 4 * 60 * 1000;
-            endTime = new Date(startTime.getTime() + sessionDuration);
+            const repeatEndTime = new Date(repeatStartTime.getTime() + sessionDuration);
+            
+            mockUsers.push({
+              email: baseUser.email,
+              password: baseUser.password,
+              startTime: repeatStartTime,
+              endTime: repeatEndTime,
+              isActive: false
+            });
           }
         }
         
-        mockUsers.push({
-          email: `user${totalUsers + i + 1}@example.com`,
-          password: bcrypt.hashSync('password123', 10),
-          startTime: startTime,
-          endTime: endTime,
-          isActive: isActive
-        });
+        await User.create(mockUsers);
+        console.log('✅ 50 mock users created successfully for testing');
       }
-      
-      const repeatUsersCount = Math.floor(usersToCreate * 0.3);
-      for (let i = 0; i < repeatUsersCount; i++) {
-        const baseUser = mockUsers[i];
-        if (baseUser.startTime && baseUser.endTime) {
-          const repeatStartTime = new Date(baseUser.startTime.getTime() + (24 * 60 * 60 * 1000));
-          const sessionDuration = Math.random() * 4 * 60 * 1000;
-          const repeatEndTime = new Date(repeatStartTime.getTime() + sessionDuration);
-          
-          mockUsers.push({
-            email: baseUser.email,
-            password: baseUser.password,
-            startTime: repeatStartTime,
-            endTime: repeatEndTime,
-            isActive: false
-          });
-        }
-      }
-      
-      await User.create(mockUsers);
-      console.log('✅ 50 mock users created successfully for testing');
-    }
   } catch (error) {
     console.error('❌ Error initializing demo user:', error.message);
   }
