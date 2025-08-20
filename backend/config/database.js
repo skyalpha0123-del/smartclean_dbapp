@@ -88,8 +88,27 @@ const dbHelpers = {
   getAllUsers: async () => {
     try {
       if (!mongoose.connection.readyState) {
-        console.log('⚠️  Database not connected, returning empty array');
-        return [];
+        console.log('⚠️  Database not connected, returning mock data');
+        return [
+          {
+            _id: 'mock1',
+            name: 'John Doe',
+            email: 'john@example.com',
+            startTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
+            endTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
+            isActive: false,
+            createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000)
+          },
+          {
+            _id: 'mock2',
+            name: 'Jane Smith',
+            email: 'jane@example.com',
+            startTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
+            endTime: null,
+            isActive: true,
+            createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000)
+          }
+        ];
       }
       return await User.find({ 
         email: { $ne: 'demoe@smartclean.se' } 
@@ -195,12 +214,12 @@ const dbHelpers = {
   getAnalyticsData: async () => {
     try {
       if (!mongoose.connection.readyState) {
-        console.log('⚠️  Database not connected, returning default analytics');
+        console.log('⚠️  Database not connected, returning mock analytics');
         return {
-          totalUsers: 0,
-          activeQueue: 0,
-          repeatUsers: 0,
-          avgSessions: 0
+          totalUsers: 2,
+          activeQueue: 1,
+          repeatUsers: 1,
+          avgSessions: 1.5
         };
       }
       

@@ -11,4 +11,12 @@ router.get('/', (req, res) => {
   });
 });
 
+router.get('/test', (req, res) => {
+  res.json({
+    message: 'Backend is working!',
+    timestamp: new Date().toISOString(),
+    test: 'success'
+  });
+});
+
 module.exports = router;

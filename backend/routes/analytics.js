@@ -2,6 +2,14 @@ const express = require('express');
 const router = express.Router();
 const { dbHelpers } = require('../config/database');
 
+router.get('/test', (req, res) => {
+  res.json({
+    message: 'Analytics route is working!',
+    timestamp: new Date().toISOString(),
+    test: 'success'
+  });
+});
+
 router.get('/', async (req, res) => {
   try {
     const analyticsData = await dbHelpers.getAnalyticsData();

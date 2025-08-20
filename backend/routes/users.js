@@ -3,6 +3,14 @@ const router = express.Router();
 const { dbHelpers } = require('../config/database');
 const bcrypt = require('bcryptjs');
 
+router.get('/test', (req, res) => {
+  res.json({
+    message: 'Users route is working!',
+    timestamp: new Date().toISOString(),
+    test: 'success'
+  });
+});
+
 router.get('/', async (req, res) => {
   try {
     const users = await dbHelpers.getAllUsers();
