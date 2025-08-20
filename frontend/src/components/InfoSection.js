@@ -72,14 +72,14 @@ const InfoSection = () => {
             <div className="metric-icon">🔄</div>
             <div className="metric-label">Repeat Users</div>
             <div className="metric-value">{loading ? '...' : analyticsData.repeatUsers}</div>
-            <div className="metric-description">Multiple sessions</div>
+            <div className="metric-description">Users with 2+ sessions</div>
           </div>
           
           <div className="metric-card">
             <div className="metric-icon">📊</div>
-            <div className="metric-label">Avg Sessions</div>
+            <div className="metric-label">Avg Session Time</div>
             <div className="metric-value">{loading ? '...' : analyticsData.avgSessions}</div>
-            <div className="metric-description">Per user</div>
+            <div className="metric-description">Minutes per session</div>
           </div>
         </div>
       </div>

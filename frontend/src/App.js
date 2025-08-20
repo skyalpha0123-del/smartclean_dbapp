@@ -15,12 +15,12 @@ const SimpleHeader = () => {
     <header className="simple-header">
       <div className="header-content">
         <h1>SmartClean</h1>
-        <div className="user-info">
-          <span>Welcome, {user?.name}</span>
-          <button onClick={logout} className="btn btn-secondary btn-small">
-            Logout
-          </button>
-        </div>
+                       <div className="user-info">
+                 <span>Welcome, {user?.email}</span>
+                 <button onClick={logout} className="btn btn-secondary btn-small">
+                   Logout
+                 </button>
+               </div>
       </div>
     </header>
   );

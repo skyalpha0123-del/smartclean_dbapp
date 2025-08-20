@@ -15,7 +15,6 @@ const Login = () => {
 
 
   const VALID_USER = {
-    name: 'demoSmartClean',
     email: 'demoe@smartclean.se',
     password: 'demoSmart!@#'
   };
@@ -48,7 +47,6 @@ const Login = () => {
       if (formData.email === VALID_USER.email && formData.password === VALID_USER.password) {
 
         login({
-          name: VALID_USER.name,
           email: VALID_USER.email,
           isAuthenticated: true
         });

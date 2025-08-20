@@ -18,12 +18,6 @@ mongoose.connect(MONGODB_URI, {
 });
 
 const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Name is required'],
-    trim: true,
-    maxlength: [100, 'Name cannot exceed 100 characters']
-  },
   email: {
     type: String,
     required: [true, 'Email is required'],
@@ -81,21 +75,6 @@ async function insertDemoUser() {
       console.log(`⚠️  Database has ${totalUsers} users, adding ${50 - totalUsers} mock users for testing`);
       
       const mockUsers = [];
-      const names = [
-        'John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Wilson', 'David Brown',
-        'Emily Davis', 'James Miller', 'Lisa Anderson', 'Robert Taylor', 'Maria Garcia',
-        'William Martinez', 'Jennifer Robinson', 'Christopher Lee', 'Amanda White',
-        'Daniel Clark', 'Nicole Lewis', 'Matthew Hall', 'Stephanie Young',
-        'Anthony Allen', 'Rebecca King', 'Kevin Wright', 'Michelle Green',
-        'Joshua Baker', 'Ashley Adams', 'Ryan Nelson', 'Kimberly Carter',
-        'Andrew Mitchell', 'Jessica Perez', 'Nathan Roberts', 'Amber Turner',
-        'Steven Phillips', 'Melissa Campbell', 'Timothy Parker', 'Heather Evans',
-        'Brian Edwards', 'Christina Collins', 'Jason Stewart', 'Rachel Sanchez',
-        'Jeffrey Morris', 'Lauren Reed', 'Mark Cook', 'Danielle Morgan',
-        'Donald Bell', 'Megan Murphy', 'Paul Bailey', 'Crystal Rivera',
-        'Kenneth Cooper', 'Tiffany Richardson', 'Ronald Cox', 'Stephanie Ward',
-        'Edward Torres', 'Natalie Peterson'
-      ];
       
       const usersToCreate = 50 - totalUsers;
       for (let i = 0; i < usersToCreate; i++) {
@@ -107,7 +86,6 @@ async function insertDemoUser() {
         const endTime = hasEndTime ? new Date(startTime.getTime() + Math.random() * 2 * 60 * 60 * 1000) : null;
         
         mockUsers.push({
-          name: names[i],
           email: `user${totalUsers + i + 1}@example.com`,
           password: bcrypt.hashSync('password123', 10),
           startTime: startTime,
@@ -136,7 +114,6 @@ const dbHelpers = {
         return [
           {
             _id: 'mock1',
-            name: 'John Doe',
             email: 'john@example.com',
             startTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
             endTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
@@ -145,7 +122,6 @@ const dbHelpers = {
           },
           {
             _id: 'mock2',
-            name: 'Jane Smith',
             email: 'jane@example.com',
             startTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
             endTime: null,
@@ -163,7 +139,6 @@ const dbHelpers = {
       return [
         {
           _id: 'mock1',
-          name: 'John Doe',
           email: 'john@example.com',
           startTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
           endTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
@@ -172,7 +147,6 @@ const dbHelpers = {
         },
         {
           _id: 'mock2',
-          name: 'Jane Smith',
           email: 'jane@example.com',
           startTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
           endTime: null,
@@ -199,20 +173,18 @@ const dbHelpers = {
     }
   },
 
-  createUser: async (name, email, password) => {
+  createUser: async (email, password) => {
     try {
       const bcrypt = require('bcryptjs');
       const hashedPassword = bcrypt.hashSync(password, 10);
       
       const user = await User.create({
-        name,
         email,
         password: hashedPassword
       });
       
       return {
         id: user._id,
-        name: user.name,
         email: user.email
       };
     } catch (error) {
@@ -220,11 +192,11 @@ const dbHelpers = {
     }
   },
 
-  updateUser: async (id, name, email) => {
+  updateUser: async (id, email) => {
     try {
       const user = await User.findByIdAndUpdate(
         id,
-        { name, email },
+        { email },
         { new: true, runValidators: true }
       ).select('-password');
       
@@ -283,7 +255,7 @@ const dbHelpers = {
           totalUsers: 2,
           activeQueue: 1,
           repeatUsers: 1,
-          avgSessions: 1.5
+          avgSessions: 0
         };
       }
       
@@ -294,24 +266,40 @@ const dbHelpers = {
         ...demoUserFilter, 
         isActive: true 
       });
-      const repeatUsers = await User.countDocuments({ 
+      
+      const usersWithMultipleSessions = await User.aggregate([
+        { $match: { ...demoUserFilter, startTime: { $exists: true, $ne: null } } },
+        { $group: { _id: '$email', sessionCount: { $sum: 1 } } },
+        { $match: { sessionCount: { $gte: 2 } } },
+        { $count: 'repeatUsers' }
+      ]);
+      
+      const repeatUsers = usersWithMultipleSessions[0]?.repeatUsers || 0;
+      
+      const usersWithCompletedSessions = await User.find({
         ...demoUserFilter,
         startTime: { $exists: true, $ne: null },
         endTime: { $exists: true, $ne: null }
       });
       
-      const usersWithSessions = await User.countDocuments({
-        ...demoUserFilter,
-        startTime: { $exists: true, $ne: null }
+      let totalSessionTime = 0;
+      let validSessions = 0;
+      
+      usersWithCompletedSessions.forEach(user => {
+        if (user.startTime && user.endTime) {
+          const sessionTime = user.endTime.getTime() - user.startTime.getTime();
+          totalSessionTime += sessionTime;
+          validSessions++;
+        }
       });
       
-      const avgSessions = usersWithSessions > 0 ? (totalUsers / usersWithSessions).toFixed(1) : 0;
+      const avgSessions = validSessions > 0 ? (totalSessionTime / validSessions / (1000 * 60)) : 0;
 
       return {
         totalUsers,
         activeQueue: activeUsers,
         repeatUsers,
-        avgSessions: parseFloat(avgSessions)
+        avgSessions: Math.round(avgSessions * 100) / 100
       };
     } catch (error) {
       console.error('❌ Error fetching analytics:', error.message);
@@ -320,7 +308,7 @@ const dbHelpers = {
         totalUsers: 2,
         activeQueue: 1,
         repeatUsers: 1,
-        avgSessions: 1.5
+        avgSessions: 0
       };
     }
   },

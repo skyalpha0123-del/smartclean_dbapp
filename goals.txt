@@ -1,3 +1,3 @@
-- add 50 mock datas to database for testing site
+- display the average session time in minutes with one decimal place (example: 2.5 min)
 
 - remove all comments.

@@ -9,7 +9,7 @@ const DataTable = () => {
   const [filterText, setFilterText] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [sortField, setSortField] = useState('name');
+  const [sortField, setSortField] = useState('email');
   const [sortDirection, setSortDirection] = useState('asc');
 
   useEffect(() => {
@@ -25,7 +25,6 @@ const DataTable = () => {
       
       const sanitizedData = userData.map(user => ({
         id: user._id || user.id || null,
-        name: user.name || '',
         email: user.email || '',
         startTime: user.startTime || null,
         endTime: user.endTime || null,
@@ -190,14 +189,11 @@ const DataTable = () => {
       ) : (
         <div className="table-wrapper">
           <table className="data-table">
-            <thead>
-              <tr>
-                <th onClick={() => handleSort('name')} className="sortable">
-                  Name {renderSortIcon('name')}
-                </th>
-                <th onClick={() => handleSort('email')} className="sortable">
-                  Email {renderSortIcon('email')}
-                </th>
+                             <thead>
+                   <tr>
+                     <th onClick={() => handleSort('email')} className="sortable">
+                       Email {renderSortIcon('email')}
+                     </th>
                 <th onClick={() => handleSort('startTime')} className="sortable">
                   Start Time {renderSortIcon('startTime')}
                 </th>
@@ -209,11 +205,10 @@ const DataTable = () => {
                 </th>
               </tr>
             </thead>
-            <tbody>
-              {sortedData.map((item) => (
-                <tr key={item.id || item._id}>
-                  <td>{item.name || 'N/A'}</td>
-                  <td>{item.email || 'N/A'}</td>
+                               <tbody>
+                     {sortedData.map((item) => (
+                       <tr key={item.id || item._id}>
+                         <td>{item.email || 'N/A'}</td>
                   <td>
                     {item.startTime ? new Date(item.startTime).toLocaleString() : 'Not started'}
                   </td>

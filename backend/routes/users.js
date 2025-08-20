@@ -56,12 +56,12 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { email, password } = req.body;
     
-    if (!name || !email || !password) {
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
-        error: 'Name, email, and password are required'
+        error: 'Email and password are required'
       });
     }
 
@@ -80,7 +80,7 @@ router.post('/', async (req, res) => {
       });
     }
     
-    const newUser = await dbHelpers.createUser(name, email, password);
+    const newUser = await dbHelpers.createUser(email, password);
     
     res.status(201).json({
       success: true,
@@ -99,12 +99,12 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email } = req.body;
+    const { email } = req.body;
     
-    if (!name || !email) {
+    if (!email) {
       return res.status(400).json({
         success: false,
-        error: 'Name and email are required'
+        error: 'Email is required'
       });
     }
     
@@ -124,7 +124,7 @@ router.put('/:id', async (req, res) => {
       });
     }
     
-    const updatedUser = await dbHelpers.updateUser(id, name, email);
+    const updatedUser = await dbHelpers.updateUser(id, email);
     
     res.json({
       success: true,
