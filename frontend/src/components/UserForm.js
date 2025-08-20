@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import './UserForm.css';
 
 const UserForm = () => {
-  const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = Boolean(id);
 
@@ -32,7 +31,7 @@ const UserForm = () => {
       });
     } catch (err) {
       alert('Failed to fetch user. Please try again.');
-      navigate('/users');
+      window.location.href = '/users';
     } finally {
       setLoading(false);
     }
@@ -89,7 +88,7 @@ const UserForm = () => {
         alert('User created successfully!');
       }
       
-      navigate('/users');
+      window.location.href = '/users';
     } catch (err) {
       const errorMessage = err.response?.data?.error || 'Something went wrong. Please try again.';
       alert(errorMessage);
@@ -100,7 +99,7 @@ const UserForm = () => {
   };
 
   const handleCancel = () => {
-    navigate('/users');
+    window.location.href = '/users';
   };
 
   if (loading && isEditing) {

@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import './Home.css';
 
 const Home = () => {
@@ -14,12 +13,12 @@ const Home = () => {
             A modern full-stack application built with React and Express.js
           </p>
           <div className="hero-actions">
-            <Link to="/users" className="btn btn-primary">
+            <a href="/users" className="btn btn-primary">
               View Users
-            </Link>
-            <Link to="/users/new" className="btn btn-secondary">
+            </a>
+            <a href="/users/new" className="btn btn-secondary">
               Add New User
-            </Link>
+            </a>
           </div>
         </div>
       </div>

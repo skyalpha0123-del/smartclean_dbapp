@@ -22,6 +22,41 @@ body {
   flex-direction: column;
 }
 
+/* Simple Header */
+.simple-header {
+  background-color: var(--bg-primary);
+  box-shadow: var(--shadow);
+  border-bottom: 1px solid var(--border-color);
+  padding: 15px 0;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-content h1 {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user-info span {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
 .main-content {
   flex: 1;
   padding: 20px;
@@ -173,5 +208,16 @@ body {
   .btn {
     padding: 10px 20px;
     font-size: 14px;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .user-info {
+    flex-direction: column;
+    gap: 10px;
   }
 }

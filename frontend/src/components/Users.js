@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './Users.css';
 
@@ -66,10 +65,10 @@ const Users = () => {
     <div className="users-page">
       <div className="users-header">
         <h1>Users</h1>
-        <Link to="/users/new" className="btn btn-primary">
+        <a href="/users/new" className="btn btn-primary">
           <span className="btn-icon">+</span>
           Add New User
-        </Link>
+        </a>
       </div>
 
       {users.length === 0 ? (
@@ -77,9 +76,9 @@ const Users = () => {
           <div className="empty-icon">👥</div>
           <h3>No users found</h3>
           <p>Get started by adding your first user.</p>
-          <Link to="/users/new" className="btn btn-primary">
+          <a href="/users/new" className="btn btn-primary">
             Add First User
-          </Link>
+          </a>
         </div>
       ) : (
         <div className="users-table-container">
@@ -99,12 +98,12 @@ const Users = () => {
                   <td>{user.name}</td>
                   <td>{user.email}</td>
                   <td className="actions">
-                    <Link 
-                      to={`/users/${user.id}/edit`} 
+                    <a 
+                      href={`/users/${user.id}/edit`}
                       className="btn btn-small btn-secondary"
                     >
                       Edit
-                    </Link>
+                    </a>
                     <button
                       onClick={() => handleDelete(user.id)}
                       className="btn btn-small btn-danger"
