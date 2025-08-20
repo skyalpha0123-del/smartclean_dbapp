@@ -1,3 +1,7 @@
 - display the average session time in minutes with one decimal place (example: 2.5 min)
+- modify mock datas
+    exist some repeat users.
+    difference between start and end time should be smaller than 4 min
+    make start session time place between Aug 1st and Aug 20nd
 
 - remove all comments.

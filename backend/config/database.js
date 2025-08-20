@@ -77,13 +77,32 @@ async function insertDemoUser() {
       const mockUsers = [];
       
       const usersToCreate = 50 - totalUsers;
+      const baseDate = new Date('2025-08-01T00:00:00Z');
+      const endDate = new Date('2025-08-20T23:59:59Z');
+      
       for (let i = 0; i < usersToCreate; i++) {
         const isActive = Math.random() > 0.7;
         const hasStartTime = Math.random() > 0.2;
         const hasEndTime = hasStartTime && Math.random() > 0.3;
         
-        const startTime = hasStartTime ? new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000) : null;
-        const endTime = hasEndTime ? new Date(startTime.getTime() + Math.random() * 2 * 60 * 60 * 1000) : null;
+        let startTime = null;
+        let endTime = null;
+        
+        if (hasStartTime) {
+          const randomDays = Math.random() * 20;
+          const randomHours = Math.random() * 24;
+          const randomMinutes = Math.random() * 60;
+          
+          startTime = new Date(baseDate.getTime() + 
+            (randomDays * 24 * 60 * 60 * 1000) + 
+            (randomHours * 60 * 60 * 1000) + 
+            (randomMinutes * 60 * 1000));
+          
+          if (hasEndTime) {
+            const sessionDuration = Math.random() * 4 * 60 * 1000;
+            endTime = new Date(startTime.getTime() + sessionDuration);
+          }
+        }
         
         mockUsers.push({
           email: `user${totalUsers + i + 1}@example.com`,
@@ -92,6 +111,24 @@ async function insertDemoUser() {
           endTime: endTime,
           isActive: isActive
         });
+      }
+      
+      const repeatUsersCount = Math.floor(usersToCreate * 0.3);
+      for (let i = 0; i < repeatUsersCount; i++) {
+        const baseUser = mockUsers[i];
+        if (baseUser.startTime && baseUser.endTime) {
+          const repeatStartTime = new Date(baseUser.startTime.getTime() + (24 * 60 * 60 * 1000));
+          const sessionDuration = Math.random() * 4 * 60 * 1000;
+          const repeatEndTime = new Date(repeatStartTime.getTime() + sessionDuration);
+          
+          mockUsers.push({
+            email: baseUser.email,
+            password: baseUser.password,
+            startTime: repeatStartTime,
+            endTime: repeatEndTime,
+            isActive: false
+          });
+        }
       }
       
       await User.create(mockUsers);
