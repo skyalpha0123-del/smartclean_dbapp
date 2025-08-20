@@ -78,26 +78,45 @@ async function insertDemoUser() {
 
     const totalUsers = await User.countDocuments();
     if (totalUsers <= 1) {
-      console.log('⚠️  Database has few users, adding test users');
-      await User.create([
-        {
-          name: 'John Doe',
-          email: 'john@example.com',
+      console.log('⚠️  Database has few users, adding 50 mock users for testing');
+      
+      const mockUsers = [];
+      const names = [
+        'John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Wilson', 'David Brown',
+        'Emily Davis', 'James Miller', 'Lisa Anderson', 'Robert Taylor', 'Maria Garcia',
+        'William Martinez', 'Jennifer Robinson', 'Christopher Lee', 'Amanda White',
+        'Daniel Clark', 'Nicole Lewis', 'Matthew Hall', 'Stephanie Young',
+        'Anthony Allen', 'Rebecca King', 'Kevin Wright', 'Michelle Green',
+        'Joshua Baker', 'Ashley Adams', 'Ryan Nelson', 'Kimberly Carter',
+        'Andrew Mitchell', 'Jessica Perez', 'Nathan Roberts', 'Amber Turner',
+        'Steven Phillips', 'Melissa Campbell', 'Timothy Parker', 'Heather Evans',
+        'Brian Edwards', 'Christina Collins', 'Jason Stewart', 'Rachel Sanchez',
+        'Jeffrey Morris', 'Lauren Reed', 'Mark Cook', 'Danielle Morgan',
+        'Donald Bell', 'Megan Murphy', 'Paul Bailey', 'Crystal Rivera',
+        'Kenneth Cooper', 'Tiffany Richardson', 'Ronald Cox', 'Stephanie Ward',
+        'Edward Torres', 'Natalie Peterson'
+      ];
+      
+      for (let i = 0; i < 50; i++) {
+        const isActive = Math.random() > 0.7;
+        const hasStartTime = Math.random() > 0.2;
+        const hasEndTime = hasStartTime && Math.random() > 0.3;
+        
+        const startTime = hasStartTime ? new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000) : null;
+        const endTime = hasEndTime ? new Date(startTime.getTime() + Math.random() * 2 * 60 * 60 * 1000) : null;
+        
+        mockUsers.push({
+          name: names[i],
+          email: `user${i + 1}@example.com`,
           password: bcrypt.hashSync('password123', 10),
-          startTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-          endTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
-          isActive: false
-        },
-        {
-          name: 'Jane Smith',
-          email: 'jane@example.com',
-          password: bcrypt.hashSync('password123', 10),
-          startTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
-          endTime: null,
-          isActive: true
-        }
-      ]);
-      console.log('✅ Test users created successfully');
+          startTime: startTime,
+          endTime: endTime,
+          isActive: isActive
+        });
+      }
+      
+      await User.create(mockUsers);
+      console.log('✅ 50 mock users created successfully for testing');
     }
   } catch (error) {
     console.error('❌ Error initializing demo user:', error.message);
