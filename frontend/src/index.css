@@ -14,8 +14,8 @@ code {
 
 /* CSS Variables for consistent theming */
 :root {
-  --primary-color: #007bff;
-  --primary-hover: #0056b3;
+  --primary-color: #4CAF50;
+  --primary-hover: #45a049;
   --secondary-color: #6c757d;
   --secondary-hover: #545b62;
   --danger-color: #dc3545;

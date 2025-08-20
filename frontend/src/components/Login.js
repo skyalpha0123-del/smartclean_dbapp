@@ -120,12 +120,6 @@ const Login = () => {
             )}
           </button>
         </form>
-
-        <div className="demo-credentials">
-          <h3>Demo Credentials:</h3>
-          <p><strong>Email:</strong> demoe@smartclean.se</p>
-          <p><strong>Password:</strong> demoSmart!@#</p>
-        </div>
       </div>
     </div>
   );

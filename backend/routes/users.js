@@ -1,14 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const { dbHelpers } = require('../config/database');
+const bcrypt = require('bcryptjs');
 
 // GET all users
 router.get('/', async (req, res) => {
   try {
-    // TODO: Implement database query
-    const users = [
-      { id: 1, name: 'John Doe', email: 'john@example.com' },
-      { id: 2, name: 'Jane Smith', email: 'jane@example.com' }
-    ];
+    const users = await dbHelpers.getAllUsers();
     
     res.json({
       success: true,
@@ -28,9 +26,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
-    // TODO: Implement database query
-    const user = { id: parseInt(id), name: 'John Doe', email: 'john@example.com' };
+    const user = await dbHelpers.getUserById(id);
     
     if (!user) {
       return res.status(404).json({
@@ -55,23 +51,34 @@ router.get('/:id', async (req, res) => {
 // POST create new user
 router.post('/', async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, password } = req.body;
     
-    // TODO: Add validation
-    if (!name || !email) {
+    // Validation
+    if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
-        error: 'Name and email are required'
+        error: 'Name, email, and password are required'
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 6 characters long'
       });
     }
     
-    // TODO: Implement database insert
-    const newUser = {
-      id: Date.now(),
-      name,
-      email,
-      createdAt: new Date().toISOString()
-    };
+    // Check if user already exists
+    const existingUser = await dbHelpers.getUserByEmail(email);
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        error: 'User with this email already exists'
+      });
+    }
+    
+    // Create user
+    const newUser = await dbHelpers.createUser(name, email, password);
     
     res.status(201).json({
       success: true,
@@ -93,13 +100,34 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { name, email } = req.body;
     
-    // TODO: Add validation and database update
-    const updatedUser = {
-      id: parseInt(id),
-      name: name || 'John Doe',
-      email: email || 'john@example.com',
-      updatedAt: new Date().toISOString()
-    };
+    // Validation
+    if (!name || !email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Name and email are required'
+      });
+    }
+    
+    // Check if user exists
+    const existingUser = await dbHelpers.getUserById(id);
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+    
+    // Check if email is already taken by another user
+    const userWithEmail = await dbHelpers.getUserByEmail(email);
+    if (userWithEmail && userWithEmail.id !== parseInt(id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email is already taken by another user'
+      });
+    }
+    
+    // Update user
+    const updatedUser = await dbHelpers.updateUser(id, name, email);
     
     res.json({
       success: true,
@@ -120,11 +148,22 @@ router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    // TODO: Implement database delete
+    // Check if user exists
+    const existingUser = await dbHelpers.getUserById(id);
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+    
+    // Delete user
+    const result = await dbHelpers.deleteUser(id);
     
     res.json({
       success: true,
-      message: `User with ID ${id} deleted successfully`
+      message: `User with ID ${id} deleted successfully`,
+      deletedRows: result.deletedRows
     });
   } catch (error) {
     res.status(500).json({

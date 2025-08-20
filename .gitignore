@@ -17,6 +17,12 @@ goals.txt
 frontend/build/
 frontend/dist/
 
+# Database files
+backend/data/
+*.db
+*.sqlite
+*.sqlite3
+
 # Logs
 logs
 *.log
