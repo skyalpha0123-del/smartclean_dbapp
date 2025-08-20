@@ -66,7 +66,7 @@ const Login = () => {
     <div className="login-page">
       <div className="login-container">
         <div className="login-header">
-          <h1>Welcome to Database App</h1>
+          <h1>Welcome to SmartClean</h1>
           <p>Please sign in to continue</p>
         </div>
 

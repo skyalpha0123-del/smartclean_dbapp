@@ -1,4 +1,3 @@
-- Domo credentials must not be shown in UI
-- primary color should be light green
-- add database connection in backend
-- now, UI should be empty, display nothing.
+- In main UI, at the top, place information section looks like top.png
+- change the title in broswer tab into SmartClean and place logo using sc_robot_logo.png in frontend/public folder
+- under the information section, place table that shows data from database with filter function

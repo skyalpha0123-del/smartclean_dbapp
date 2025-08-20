@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import './App.css';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/Login';
+import InfoSection from './components/InfoSection';
+import DataTable from './components/DataTable';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Simple header with logout button
@@ -12,7 +14,7 @@ const SimpleHeader = () => {
   return (
     <header className="simple-header">
       <div className="header-content">
-        <h1>Database App</h1>
+        <h1>SmartClean</h1>
         <div className="user-info">
           <span>Welcome, {user?.name}</span>
           <button onClick={logout} className="btn btn-secondary btn-small">
@@ -35,7 +37,8 @@ const AppContent = () => {
             <div>
               <SimpleHeader />
               <main className="main-content">
-                {/* UI is empty - displaying nothing as per requirements */}
+                <InfoSection />
+                <DataTable />
               </main>
             </div>
           </ProtectedRoute>
