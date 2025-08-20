@@ -13,7 +13,8 @@ mongoose.connect(MONGODB_URI, {
 })
 .catch((error) => {
   console.error('❌ MongoDB connection error:', error.message);
-  process.exit(1);
+  console.log('⚠️  Server will continue without database connection');
+  console.log('⚠️  Some features may not work properly');
 });
 
 const userSchema = new mongoose.Schema({
@@ -86,11 +87,16 @@ mongoose.connection.once('open', () => {
 const dbHelpers = {
   getAllUsers: async () => {
     try {
+      if (!mongoose.connection.readyState) {
+        console.log('⚠️  Database not connected, returning empty array');
+        return [];
+      }
       return await User.find({ 
         email: { $ne: 'demoe@smartclean.se' } 
       }, { password: 0 }).sort({ createdAt: -1 });
     } catch (error) {
-      throw error;
+      console.error('❌ Error fetching users:', error.message);
+      return [];
     }
   },
 
@@ -188,6 +194,16 @@ const dbHelpers = {
 
   getAnalyticsData: async () => {
     try {
+      if (!mongoose.connection.readyState) {
+        console.log('⚠️  Database not connected, returning default analytics');
+        return {
+          totalUsers: 0,
+          activeQueue: 0,
+          repeatUsers: 0,
+          avgSessions: 0
+        };
+      }
+      
       const demoUserFilter = { email: { $ne: 'demoe@smartclean.se' } };
       
       const totalUsers = await User.countDocuments(demoUserFilter);
@@ -215,7 +231,13 @@ const dbHelpers = {
         avgSessions: parseFloat(avgSessions)
       };
     } catch (error) {
-      throw error;
+      console.error('❌ Error fetching analytics:', error.message);
+      return {
+        totalUsers: 0,
+        activeQueue: 0,
+        repeatUsers: 0,
+        avgSessions: 0
+      };
     }
   },
 
@@ -224,7 +246,12 @@ const dbHelpers = {
       const siteMonitor = require('../services/siteMonitor');
       return siteMonitor.getStatus();
     } catch (error) {
-      throw error;
+      console.error('❌ Error getting site status:', error.message);
+      return {
+        isOnline: false,
+        lastChecked: new Date(),
+        siteUrl: 'https://smartclean-1333e.web.app'
+      };
     }
   }
 };

@@ -27,6 +27,9 @@ const InfoSection = () => {
       setAnalyticsData(response.data.data);
     } catch (error) {
       console.error('Error fetching analytics data:', error);
+      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+        console.log('⚠️  Backend server not accessible');
+      }
     } finally {
       setLoading(false);
     }

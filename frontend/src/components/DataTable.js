@@ -36,8 +36,14 @@ const DataTable = () => {
       setData(sanitizedData);
       setError(null);
     } catch (err) {
-      setError('Failed to fetch data. Please try again.');
       console.error('Error fetching data:', err);
+      if (err.code === 'ECONNREFUSED' || err.message.includes('Network Error')) {
+        setError('Cannot connect to server. Please check if the backend is running.');
+      } else if (err.response?.status === 500) {
+        setError('Server error occurred. Please try again later.');
+      } else {
+        setError('Failed to fetch data. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
