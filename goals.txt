@@ -1,6 +1,4 @@
-- Synchronize table and info section
-- In table, Id column don't need to be shown
-- Add start session time and end session time in database.
-- add filter with date
+- I want to scrap data from another site using puppeteer.
+    Now integrate puppeteer into the backend.
 
 - remove all comments.

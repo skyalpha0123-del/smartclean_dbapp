@@ -3,7 +3,6 @@ const router = express.Router();
 const { dbHelpers } = require('../config/database');
 const bcrypt = require('bcryptjs');
 
-// GET all users
 router.get('/', async (req, res) => {
   try {
     const users = await dbHelpers.getAllUsers();
@@ -22,7 +21,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET user by ID
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -48,12 +46,10 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST create new user
 router.post('/', async (req, res) => {
   try {
     const { name, email, password } = req.body;
     
-    // Validation
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -68,7 +64,6 @@ router.post('/', async (req, res) => {
       });
     }
     
-    // Check if user already exists
     const existingUser = await dbHelpers.getUserByEmail(email);
     if (existingUser) {
       return res.status(400).json({
@@ -77,7 +72,6 @@ router.post('/', async (req, res) => {
       });
     }
     
-    // Create user
     const newUser = await dbHelpers.createUser(name, email, password);
     
     res.status(201).json({
@@ -94,13 +88,11 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT update user
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email } = req.body;
     
-    // Validation
     if (!name || !email) {
       return res.status(400).json({
         success: false,
@@ -108,7 +100,6 @@ router.put('/:id', async (req, res) => {
       });
     }
     
-    // Check if user exists
     const existingUser = await dbHelpers.getUserById(id);
     if (!existingUser) {
       return res.status(404).json({
@@ -117,7 +108,6 @@ router.put('/:id', async (req, res) => {
       });
     }
     
-    // Check if email is already taken by another user
     const userWithEmail = await dbHelpers.getUserByEmail(email);
     if (userWithEmail && userWithEmail.id !== parseInt(id)) {
       return res.status(400).json({
@@ -126,7 +116,6 @@ router.put('/:id', async (req, res) => {
       });
     }
     
-    // Update user
     const updatedUser = await dbHelpers.updateUser(id, name, email);
     
     res.json({
@@ -143,12 +132,10 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE user
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Check if user exists
     const existingUser = await dbHelpers.getUserById(id);
     if (!existingUser) {
       return res.status(404).json({
@@ -157,7 +144,6 @@ router.delete('/:id', async (req, res) => {
       });
     }
     
-    // Delete user
     const result = await dbHelpers.deleteUser(id);
     
     res.json({
@@ -174,12 +160,10 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// POST start user session
 router.post('/:id/start-session', async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Check if user exists
     const existingUser = await dbHelpers.getUserById(id);
     if (!existingUser) {
       return res.status(404).json({
@@ -188,7 +172,6 @@ router.post('/:id/start-session', async (req, res) => {
       });
     }
     
-    // Start session
     const updatedUser = await dbHelpers.startSession(id);
     
     res.json({
@@ -205,12 +188,10 @@ router.post('/:id/start-session', async (req, res) => {
   }
 });
 
-// POST end user session
 router.post('/:id/end-session', async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Check if user exists
     const existingUser = await dbHelpers.getUserById(id);
     if (!existingUser) {
       return res.status(404).json({
@@ -219,7 +200,6 @@ router.post('/:id/end-session', async (req, res) => {
       });
     }
     
-    // End session
     const updatedUser = await dbHelpers.endSession(id);
     
     res.json({

@@ -20,20 +20,19 @@ const DataTable = () => {
     try {
       setLoading(true);
       const response = await axios.get('/api/users');
-      // Ensure data is properly formatted and handle null values
       const userData = response.data.data || [];
-      console.log('Raw user data:', userData); // Debug log
+      console.log('Raw user data:', userData);
       
       const sanitizedData = userData.map(user => ({
         id: user._id || user.id || null,
         name: user.name || '',
         email: user.email || '',
-        startSessionTime: user.startSessionTime || null,
-        endSessionTime: user.endSessionTime || null,
+        startTime: user.startTime || null,
+        endTime: user.endTime || null,
         createdAt: user.createdAt || null
       }));
       
-      console.log('Sanitized data:', sanitizedData); // Debug log
+      console.log('Sanitized data:', sanitizedData);
       setData(sanitizedData);
       setError(null);
     } catch (err) {
@@ -55,19 +54,15 @@ const DataTable = () => {
 
   const getSortedData = () => {
     let filteredData = data.filter(item => {
-      // Text filter
       const matchesText = Object.values(item).some(value => {
-        // Handle null/undefined values safely
         if (value === null || value === undefined) {
           return false;
         }
         return value.toString().toLowerCase().includes(filterText.toLowerCase());
       });
 
-      // Date filter
       let matchesDate = true;
       if (startDate || endDate) {
-        // Only apply date filter if createdAt exists
         if (item.createdAt) {
           const itemDate = new Date(item.createdAt);
           if (startDate && itemDate < new Date(startDate)) {
@@ -77,7 +72,6 @@ const DataTable = () => {
             matchesDate = false;
           }
         } else {
-          // If no createdAt, don't match date filters
           matchesDate = false;
         }
       }
@@ -89,7 +83,6 @@ const DataTable = () => {
       let aValue = a[sortField];
       let bValue = b[sortField];
 
-      // Handle null/undefined values in sorting
       if (aValue === null || aValue === undefined) aValue = '';
       if (bValue === null || bValue === undefined) bValue = '';
 
@@ -199,11 +192,11 @@ const DataTable = () => {
                 <th onClick={() => handleSort('email')} className="sortable">
                   Email {renderSortIcon('email')}
                 </th>
-                <th onClick={() => handleSort('startSessionTime')} className="sortable">
-                  Start Session {renderSortIcon('startSessionTime')}
+                <th onClick={() => handleSort('startTime')} className="sortable">
+                  Start Time {renderSortIcon('startTime')}
                 </th>
-                <th onClick={() => handleSort('endSessionTime')} className="sortable">
-                  End Session {renderSortIcon('endSessionTime')}
+                <th onClick={() => handleSort('endTime')} className="sortable">
+                  End Time {renderSortIcon('endTime')}
                 </th>
                 <th onClick={() => handleSort('createdAt')} className="sortable">
                   Created {renderSortIcon('createdAt')}
@@ -216,10 +209,10 @@ const DataTable = () => {
                   <td>{item.name || 'N/A'}</td>
                   <td>{item.email || 'N/A'}</td>
                   <td>
-                    {item.startSessionTime ? new Date(item.startSessionTime).toLocaleString() : 'Not started'}
+                    {item.startTime ? new Date(item.startTime).toLocaleString() : 'Not started'}
                   </td>
                   <td>
-                    {item.endSessionTime ? new Date(item.endSessionTime).toLocaleString() : 'Active'}
+                    {item.endTime ? new Date(item.endTime).toLocaleString() : 'Active'}
                   </td>
                   <td>
                     {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A'}

@@ -1,9 +1,7 @@
 const mongoose = require('mongoose');
 
-// MongoDB connection string
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/database_app';
 
-// Connect to MongoDB
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -18,7 +16,6 @@ mongoose.connect(MONGODB_URI, {
   process.exit(1);
 });
 
-// User Schema
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -39,11 +36,11 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Password is required'],
     minlength: [6, 'Password must be at least 6 characters long']
   },
-  startSessionTime: {
+  startTime: {
     type: Date,
     default: null
   },
-  endSessionTime: {
+  endTime: {
     type: Date,
     default: null
   },
@@ -55,26 +52,22 @@ const userSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Create User model
 const User = mongoose.model('User', userSchema);
 
-// Insert demo user
 async function insertDemoUser() {
   try {
     const bcrypt = require('bcryptjs');
     const hashedPassword = bcrypt.hashSync('demoSmart!@#', 10);
     
-    // Check if demo user exists
     const existingUser = await User.findOne({ email: 'demoe@smartclean.se' });
     
     if (!existingUser) {
-      // Create demo user with session data
       await User.create({
         name: 'demoSmartClean',
         email: 'demoe@smartclean.se',
         password: hashedPassword,
-        startSessionTime: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-        endSessionTime: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
+        startTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        endTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
         isActive: false
       });
       console.log('✅ Demo user created successfully with session data');
@@ -86,14 +79,11 @@ async function insertDemoUser() {
   }
 }
 
-// Initialize demo user after connection
 mongoose.connection.once('open', () => {
   insertDemoUser();
 });
 
-// Database helper functions
 const dbHelpers = {
-  // Get all users with session data
   getAllUsers: async () => {
     try {
       return await User.find({}, { password: 0 }).sort({ createdAt: -1 });
@@ -102,7 +92,6 @@ const dbHelpers = {
     }
   },
 
-  // Get user by ID
   getUserById: async (id) => {
     try {
       return await User.findById(id, { password: 0 });
@@ -111,7 +100,6 @@ const dbHelpers = {
     }
   },
 
-  // Get user by email (for authentication)
   getUserByEmail: async (email) => {
     try {
       return await User.findOne({ email });
@@ -120,7 +108,6 @@ const dbHelpers = {
     }
   },
 
-  // Create new user
   createUser: async (name, email, password) => {
     try {
       const bcrypt = require('bcryptjs');
@@ -142,7 +129,6 @@ const dbHelpers = {
     }
   },
 
-  // Update user
   updateUser: async (id, name, email) => {
     try {
       const user = await User.findByIdAndUpdate(
@@ -157,7 +143,6 @@ const dbHelpers = {
     }
   },
 
-  // Delete user
   deleteUser: async (id) => {
     try {
       const result = await User.findByIdAndDelete(id);
@@ -167,13 +152,12 @@ const dbHelpers = {
     }
   },
 
-  // Start user session
   startSession: async (userId) => {
     try {
       const user = await User.findByIdAndUpdate(
         userId,
         { 
-          startSessionTime: new Date(),
+          startTime: new Date(),
           isActive: true 
         },
         { new: true }
@@ -184,13 +168,12 @@ const dbHelpers = {
     }
   },
 
-  // End user session
   endSession: async (userId) => {
     try {
       const user = await User.findByIdAndUpdate(
         userId,
         { 
-          endSessionTime: new Date(),
+          endTime: new Date(),
           isActive: false 
         },
         { new: true }
@@ -201,19 +184,17 @@ const dbHelpers = {
     }
   },
 
-  // Get analytics data
   getAnalyticsData: async () => {
     try {
       const totalUsers = await User.countDocuments();
       const activeUsers = await User.countDocuments({ isActive: true });
       const repeatUsers = await User.countDocuments({ 
-        startSessionTime: { $exists: true, $ne: null },
-        endSessionTime: { $exists: true, $ne: null }
+        startTime: { $exists: true, $ne: null },
+        endTime: { $exists: true, $ne: null }
       });
       
-      // Calculate average sessions per user
       const usersWithSessions = await User.countDocuments({
-        startSessionTime: { $exists: true, $ne: null }
+        startTime: { $exists: true, $ne: null }
       });
       
       const avgSessions = usersWithSessions > 0 ? (totalUsers / usersWithSessions).toFixed(1) : 0;
