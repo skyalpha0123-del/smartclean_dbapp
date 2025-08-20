@@ -5,10 +5,14 @@ const { dbHelpers } = require('../config/database');
 router.get('/', async (req, res) => {
   try {
     const analyticsData = await dbHelpers.getAnalyticsData();
+    const siteStatus = await dbHelpers.getSiteStatus();
     
     res.json({
       success: true,
-      data: analyticsData
+      data: {
+        ...analyticsData,
+        siteStatus
+      }
     });
   } catch (error) {
     res.status(500).json({

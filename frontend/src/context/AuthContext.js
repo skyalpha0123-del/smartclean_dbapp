@@ -15,7 +15,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in from localStorage
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {

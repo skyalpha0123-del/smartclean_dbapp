@@ -1,4 +1,5 @@
-- I want to scrap data from another site using puppeteer.
-    Now integrate puppeteer into the backend.
+
+- Online state in info section should be reflect the state of https://smartclean-1333e.web.app site
+- demoSmartClean user should not be shown and not be included in Analytics.
 
 - remove all comments.

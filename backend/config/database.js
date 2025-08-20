@@ -86,7 +86,9 @@ mongoose.connection.once('open', () => {
 const dbHelpers = {
   getAllUsers: async () => {
     try {
-      return await User.find({}, { password: 0 }).sort({ createdAt: -1 });
+      return await User.find({ 
+        email: { $ne: 'demoe@smartclean.se' } 
+      }, { password: 0 }).sort({ createdAt: -1 });
     } catch (error) {
       throw error;
     }
@@ -186,14 +188,21 @@ const dbHelpers = {
 
   getAnalyticsData: async () => {
     try {
-      const totalUsers = await User.countDocuments();
-      const activeUsers = await User.countDocuments({ isActive: true });
+      const demoUserFilter = { email: { $ne: 'demoe@smartclean.se' } };
+      
+      const totalUsers = await User.countDocuments(demoUserFilter);
+      const activeUsers = await User.countDocuments({ 
+        ...demoUserFilter, 
+        isActive: true 
+      });
       const repeatUsers = await User.countDocuments({ 
+        ...demoUserFilter,
         startTime: { $exists: true, $ne: null },
         endTime: { $exists: true, $ne: null }
       });
       
       const usersWithSessions = await User.countDocuments({
+        ...demoUserFilter,
         startTime: { $exists: true, $ne: null }
       });
       
@@ -205,6 +214,15 @@ const dbHelpers = {
         repeatUsers,
         avgSessions: parseFloat(avgSessions)
       };
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getSiteStatus: async () => {
+    try {
+      const siteMonitor = require('../services/siteMonitor');
+      return siteMonitor.getStatus();
     } catch (error) {
       throw error;
     }

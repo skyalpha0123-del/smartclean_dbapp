@@ -7,7 +7,7 @@ import InfoSection from './components/InfoSection';
 import DataTable from './components/DataTable';
 import ProtectedRoute from './components/ProtectedRoute';
 
-// Simple header with logout button
+
 const SimpleHeader = () => {
   const { user, logout } = useAuth();
 
@@ -26,7 +26,7 @@ const SimpleHeader = () => {
   );
 };
 
-// Main app content wrapper
+
 const AppContent = () => {
   return (
     <div className="App">

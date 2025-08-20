@@ -13,7 +13,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Hardcoded user credentials
+
   const VALID_USER = {
     name: 'demoSmartClean',
     email: 'demoe@smartclean.se',
@@ -27,7 +27,7 @@ const Login = () => {
       [name]: value
     }));
     
-    // Clear error when user starts typing
+
     if (error) {
       setError('');
     }
@@ -43,17 +43,17 @@ const Login = () => {
 
     setLoading(true);
     
-    // Simulate API call delay
+
     setTimeout(() => {
       if (formData.email === VALID_USER.email && formData.password === VALID_USER.password) {
-        // Use the auth context to login
+
         login({
           name: VALID_USER.name,
           email: VALID_USER.email,
           isAuthenticated: true
         });
         
-        // Redirect to home page
+
         navigate('/');
       } else {
         setError('Invalid email or password');

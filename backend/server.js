@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 require('./config/database');
+require('./services/siteMonitor');
 
 const app = express();
 const PORT = process.env.PORT || 5000;

@@ -54,6 +54,14 @@
   font-weight: 600;
 }
 
+.status-badge.online {
+  background: var(--primary-color);
+}
+
+.status-badge.offline {
+  background: #ff4444;
+}
+
 .summary-text {
   color: var(--primary-color);
   font-size: 0.9rem;

@@ -7,7 +7,12 @@ const InfoSection = () => {
     totalUsers: 0,
     activeQueue: 0,
     repeatUsers: 0,
-    avgSessions: 0
+    avgSessions: 0,
+    siteStatus: {
+      isOnline: false,
+      lastChecked: null,
+      siteUrl: ''
+    }
   });
   const [loading, setLoading] = useState(true);
 
@@ -36,7 +41,9 @@ const InfoSection = () => {
             <h1 className="section-title">Analytics Overview</h1>
           </div>
           <div className="header-right">
-            <div className="status-badge">Online</div>
+            <div className={`status-badge ${analyticsData.siteStatus?.isOnline ? 'online' : 'offline'}`}>
+              {analyticsData.siteStatus?.isOnline ? 'Online' : 'Offline'}
+            </div>
             <div className="summary-text">
               Total Sessions: {analyticsData.totalUsers} | User Engagement: {analyticsData.repeatUsers > 0 ? Math.round((analyticsData.repeatUsers / analyticsData.totalUsers) * 100) : 0}% repeat rate
             </div>
