@@ -7,6 +7,8 @@ const DataTable = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filterText, setFilterText] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
 
@@ -38,11 +40,26 @@ const DataTable = () => {
   };
 
   const getSortedData = () => {
-    const filteredData = data.filter(item =>
-      Object.values(item).some(value =>
+    let filteredData = data.filter(item => {
+      // Text filter
+      const matchesText = Object.values(item).some(value =>
         value.toString().toLowerCase().includes(filterText.toLowerCase())
-      )
-    );
+      );
+
+      // Date filter
+      let matchesDate = true;
+      if (startDate || endDate) {
+        const itemDate = new Date(item.createdAt);
+        if (startDate && itemDate < new Date(startDate)) {
+          matchesDate = false;
+        }
+        if (endDate && itemDate > new Date(endDate + 'T23:59:59')) {
+          matchesDate = false;
+        }
+      }
+
+      return matchesText && matchesDate;
+    });
 
     return filteredData.sort((a, b) => {
       let aValue = a[sortField];
@@ -62,6 +79,12 @@ const DataTable = () => {
   const renderSortIcon = (field) => {
     if (sortField !== field) return '↕️';
     return sortDirection === 'asc' ? '↑' : '↓';
+  };
+
+  const clearFilters = () => {
+    setFilterText('');
+    setStartDate('');
+    setEndDate('');
   };
 
   if (loading) {
@@ -94,15 +117,36 @@ const DataTable = () => {
       <div className="table-header">
         <h2>Analytics Data</h2>
         <div className="table-controls">
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Search all fields..."
-              value={filterText}
-              onChange={(e) => setFilterText(e.target.value)}
-              className="search-input"
-            />
-            <span className="search-icon">🔍</span>
+          <div className="filters-section">
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Search all fields..."
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+                className="search-input"
+              />
+              <span className="search-icon">🔍</span>
+            </div>
+            <div className="date-filters">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="date-input"
+                placeholder="Start Date"
+              />
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="date-input"
+                placeholder="End Date"
+              />
+              <button onClick={clearFilters} className="btn btn-secondary btn-small">
+                Clear Filters
+              </button>
+            </div>
           </div>
           <div className="table-info">
             <span>Showing {sortedData.length} of {data.length} records</span>
@@ -114,21 +158,24 @@ const DataTable = () => {
         <div className="empty-state">
           <div className="empty-icon">📊</div>
           <h3>No data found</h3>
-          <p>{filterText ? 'Try adjusting your search terms' : 'No records available'}</p>
+          <p>{filterText || startDate || endDate ? 'Try adjusting your filters' : 'No records available'}</p>
         </div>
       ) : (
         <div className="table-wrapper">
           <table className="data-table">
             <thead>
               <tr>
-                <th onClick={() => handleSort('id')} className="sortable">
-                  ID {renderSortIcon('id')}
-                </th>
                 <th onClick={() => handleSort('name')} className="sortable">
                   Name {renderSortIcon('name')}
                 </th>
                 <th onClick={() => handleSort('email')} className="sortable">
                   Email {renderSortIcon('email')}
+                </th>
+                <th onClick={() => handleSort('startSessionTime')} className="sortable">
+                  Start Session {renderSortIcon('startSessionTime')}
+                </th>
+                <th onClick={() => handleSort('endSessionTime')} className="sortable">
+                  End Session {renderSortIcon('endSessionTime')}
                 </th>
                 <th onClick={() => handleSort('createdAt')} className="sortable">
                   Created {renderSortIcon('createdAt')}
@@ -138,9 +185,14 @@ const DataTable = () => {
             <tbody>
               {sortedData.map((item) => (
                 <tr key={item.id || item._id}>
-                  <td>{item.id || item._id}</td>
                   <td>{item.name}</td>
                   <td>{item.email}</td>
+                  <td>
+                    {item.startSessionTime ? new Date(item.startSessionTime).toLocaleString() : 'Not started'}
+                  </td>
+                  <td>
+                    {item.endSessionTime ? new Date(item.endSessionTime).toLocaleString() : 'Active'}
+                  </td>
                   <td>
                     {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'N/A'}
                   </td>

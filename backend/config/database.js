@@ -38,6 +38,18 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Password is required'],
     minlength: [6, 'Password must be at least 6 characters long']
+  },
+  startSessionTime: {
+    type: Date,
+    default: null
+  },
+  endSessionTime: {
+    type: Date,
+    default: null
+  },
+  isActive: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true
@@ -46,8 +58,8 @@ const userSchema = new mongoose.Schema({
 // Create User model
 const User = mongoose.model('User', userSchema);
 
-// Initialize demo user
-async function initializeDemoUser() {
+// Insert demo user
+async function insertDemoUser() {
   try {
     const bcrypt = require('bcryptjs');
     const hashedPassword = bcrypt.hashSync('demoSmart!@#', 10);
@@ -56,13 +68,16 @@ async function initializeDemoUser() {
     const existingUser = await User.findOne({ email: 'demoe@smartclean.se' });
     
     if (!existingUser) {
-      // Create demo user
+      // Create demo user with session data
       await User.create({
         name: 'demoSmartClean',
         email: 'demoe@smartclean.se',
-        password: hashedPassword
+        password: hashedPassword,
+        startSessionTime: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+        endSessionTime: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
+        isActive: false
       });
-      console.log('✅ Demo user created successfully');
+      console.log('✅ Demo user created successfully with session data');
     } else {
       console.log('✅ Demo user already exists');
     }
@@ -73,12 +88,12 @@ async function initializeDemoUser() {
 
 // Initialize demo user after connection
 mongoose.connection.once('open', () => {
-  initializeDemoUser();
+  insertDemoUser();
 });
 
 // Database helper functions
 const dbHelpers = {
-  // Get all users
+  // Get all users with session data
   getAllUsers: async () => {
     try {
       return await User.find({}, { password: 0 }).sort({ createdAt: -1 });
@@ -147,6 +162,68 @@ const dbHelpers = {
     try {
       const result = await User.findByIdAndDelete(id);
       return { deletedRows: result ? 1 : 0 };
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Start user session
+  startSession: async (userId) => {
+    try {
+      const user = await User.findByIdAndUpdate(
+        userId,
+        { 
+          startSessionTime: new Date(),
+          isActive: true 
+        },
+        { new: true }
+      );
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // End user session
+  endSession: async (userId) => {
+    try {
+      const user = await User.findByIdAndUpdate(
+        userId,
+        { 
+          endSessionTime: new Date(),
+          isActive: false 
+        },
+        { new: true }
+      );
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Get analytics data
+  getAnalyticsData: async () => {
+    try {
+      const totalUsers = await User.countDocuments();
+      const activeUsers = await User.countDocuments({ isActive: true });
+      const repeatUsers = await User.countDocuments({ 
+        startSessionTime: { $exists: true, $ne: null },
+        endSessionTime: { $exists: true, $ne: null }
+      });
+      
+      // Calculate average sessions per user
+      const usersWithSessions = await User.countDocuments({
+        startSessionTime: { $exists: true, $ne: null }
+      });
+      
+      const avgSessions = usersWithSessions > 0 ? (totalUsers / usersWithSessions).toFixed(1) : 0;
+
+      return {
+        totalUsers,
+        activeQueue: activeUsers,
+        repeatUsers,
+        avgSessions: parseFloat(avgSessions)
+      };
     } catch (error) {
       throw error;
     }

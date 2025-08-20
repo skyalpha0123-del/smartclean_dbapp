@@ -174,4 +174,66 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// POST start user session
+router.post('/:id/start-session', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if user exists
+    const existingUser = await dbHelpers.getUserById(id);
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+    
+    // Start session
+    const updatedUser = await dbHelpers.startSession(id);
+    
+    res.json({
+      success: true,
+      data: updatedUser,
+      message: 'User session started successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to start user session',
+      message: error.message
+    });
+  }
+});
+
+// POST end user session
+router.post('/:id/end-session', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if user exists
+    const existingUser = await dbHelpers.getUserById(id);
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+    
+    // End session
+    const updatedUser = await dbHelpers.endSession(id);
+    
+    res.json({
+      success: true,
+      data: updatedUser,
+      message: 'User session ended successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to end user session',
+      message: error.message
+    });
+  }
+});
+
 module.exports = router;

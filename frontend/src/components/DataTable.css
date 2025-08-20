@@ -22,13 +22,20 @@
 .table-controls {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 20px;
+}
+
+.filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  flex: 1;
 }
 
 .search-box {
   position: relative;
-  flex: 1;
+  width: 100%;
   max-width: 400px;
 }
 
@@ -58,10 +65,36 @@
   font-size: 18px;
 }
 
+.date-filters {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.date-input {
+  padding: 8px 12px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-width: 140px;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
 .table-info {
   color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 500;
+  text-align: right;
+  min-width: 200px;
 }
 
 .table-wrapper {

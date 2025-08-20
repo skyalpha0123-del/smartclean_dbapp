@@ -1,3 +1,4 @@
-- In main UI, at the top, place information section looks like top.png
-- change the title in broswer tab into SmartClean and place logo using sc_robot_logo.png in frontend/public folder
-- under the information section, place table that shows data from database with filter function
+- Synchronize table and info section
+- In table, Id column don't need to be shown
+- Add start session time and end session time in database.
+- add filter with date

@@ -1,7 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import './InfoSection.css';
 
 const InfoSection = () => {
+  const [analyticsData, setAnalyticsData] = useState({
+    totalUsers: 0,
+    activeQueue: 0,
+    repeatUsers: 0,
+    avgSessions: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, []);
+
+  const fetchAnalyticsData = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/analytics');
+      setAnalyticsData(response.data.data);
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="info-section">
       <div className="info-container">
@@ -12,7 +37,9 @@ const InfoSection = () => {
           </div>
           <div className="header-right">
             <div className="status-badge">Online</div>
-            <div className="summary-text">Total Sessions: 0 | User Engagement: 0% repeat rate</div>
+            <div className="summary-text">
+              Total Sessions: {analyticsData.totalUsers} | User Engagement: {analyticsData.repeatUsers > 0 ? Math.round((analyticsData.repeatUsers / analyticsData.totalUsers) * 100) : 0}% repeat rate
+            </div>
           </div>
         </div>
         
@@ -20,28 +47,28 @@ const InfoSection = () => {
           <div className="metric-card">
             <div className="metric-icon">👥</div>
             <div className="metric-label">Total Users</div>
-            <div className="metric-value">0</div>
+            <div className="metric-value">{loading ? '...' : analyticsData.totalUsers}</div>
             <div className="metric-description">Registered users</div>
           </div>
           
           <div className="metric-card">
             <div className="metric-icon">⏰</div>
             <div className="metric-label">Active Queue</div>
-            <div className="metric-value">0</div>
+            <div className="metric-value">{loading ? '...' : analyticsData.activeQueue}</div>
             <div className="metric-description">Currently in queue</div>
           </div>
           
           <div className="metric-card">
             <div className="metric-icon">🔄</div>
             <div className="metric-label">Repeat Users</div>
-            <div className="metric-value">0</div>
+            <div className="metric-value">{loading ? '...' : analyticsData.repeatUsers}</div>
             <div className="metric-description">Multiple sessions</div>
           </div>
           
           <div className="metric-card">
             <div className="metric-icon">📊</div>
             <div className="metric-label">Avg Sessions</div>
-            <div className="metric-value">0</div>
+            <div className="metric-value">{loading ? '...' : analyticsData.avgSessions}</div>
             <div className="metric-description">Per user</div>
           </div>
         </div>
