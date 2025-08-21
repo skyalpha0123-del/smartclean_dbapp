@@ -13,17 +13,15 @@ class PuppeteerService {
   async launchBrowser(options = {}) {
     try {
       const defaultOptions = {
-        headless: false,
+        headless: true,
         args: [
           '--disable-web-security',
           '--no-sandbox',
           '--disable-setuid-sandbox',
-          '--start-maximized',
           '--disable-notifications',
           '--disable-dev-shm-usage',
           '--disable-blink-features=AutomationControlled',
           '--disable-infobars',
-          '--window-position=0,0',
           '--ignore-certificate-errors',
           '--ignore-certificate-errors-spki-list',
           '--lang=en-US,en',
@@ -37,20 +35,20 @@ class PuppeteerService {
           '--disable-background-timer-throttling',
           '--disable-backgrounding-occluded-windows',
           '--disable-renderer-backgrounding',
-          '--disable-features=IsolateOrigins,site-per-process',
-          '--profile-directory=Profile 1'
+          '--disable-features=IsolateOrigins,site-per-process'
         ],
         ignoreDefaultArgs: ['--enable-automation'],
         userDataDir: './chrome-automation-profile',
-        executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-        defaultViewport: null,
+        // Use system default Chrome in headless mode for better compatibility
+        // executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        defaultViewport: { width: 1366, height: 768 },
         ...options
       };
 
       this.browser = await puppeteer.launch(defaultOptions);
       this.page = await this.browser.newPage();
       
-      // Set a reasonable viewport for visibility
+      // Set viewport for headless mode
       await this.page.setViewport({ width: 1366, height: 768 });
       await this.page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
       
@@ -59,7 +57,7 @@ class PuppeteerService {
         console.log('🔍 Browser process ID:', this.browser.process().pid);
       }
       
-      console.log('👁️  Browser launched in visible mode - you should see the browser window!');
+      console.log('👻 Browser launched in headless mode - no browser window will be visible');
       
       return this.browser;
     } catch (error) {
@@ -352,7 +350,7 @@ class PuppeteerService {
 
       console.log('🚀 Initializing Puppeteer for target site...');
       
-      await this.launchBrowser({ headless: false });
+      await this.launchBrowser({ headless: true });
       console.log('✅ Browser launched successfully');
 
       const page = await this.browser.newPage();
@@ -362,9 +360,9 @@ class PuppeteerService {
       // const logSelector = ".space-y-1.max-h-64.overflow-y-auto";
       const logSelector = ".space-y-1.max-h-64.overflow-y-auto";
 
-      // Add a small delay so you can see the navigation
+      // Add a small delay for the navigation to complete
       await new Promise(resolve => setTimeout(resolve, 10000));
-      console.log('👁️  You should now see the target site in the browser window');
+      console.log('🌐 Target site loaded successfully in headless browser');
 
       console.log('🔍 Looking for email input field...');
       const inputs = await page.$$('input#email');
@@ -381,9 +379,9 @@ class PuppeteerService {
         }
         console.log('📧 Email entered:', process.env.EMAIL_USER);
         
-        // Wait a moment so you can see the email in the input field
+        // Wait a moment for the email to be entered
         await new Promise(resolve => setTimeout(resolve, 2000));
-        console.log('👁️  You should now see the email in the input field');
+        console.log('📧 Email entered successfully in the input field');
 
         console.log('🔍 Looking for submit button...');
         const buttonSelectors ='button[class*="glass-button"]';
