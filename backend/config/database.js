@@ -38,6 +38,10 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  queueJoinTime: {
+    type: Date,
+    default: null
+  },
   isActive: {
     type: Boolean,
     default: false
@@ -57,11 +61,11 @@ async function insertDemoUser() {
     
     if (!existingUser) {
       await User.create({
-        name: 'demoSmartClean',
         email: 'demoe@smartclean.se',
         password: hashedPassword,
         startTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
         endTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
+        queueJoinTime: new Date(Date.now() - 3 * 60 * 60 * 1000),
         isActive: false
       });
       console.log('✅ Demo user created successfully with session data');
@@ -92,6 +96,9 @@ async function insertDemoUser() {
         (randomHours * 60 * 60 * 1000) + 
         (randomMinutes * 60 * 1000));
       
+      // Queue join time is before start time (user joins queue first, then starts session)
+      const queueJoinTime = new Date(startTime.getTime() - (Math.random() * 30 + 5) * 60 * 1000);
+      
       let endTime = null;
       if (Math.random() > 0.3) {
         const sessionDuration = Math.random() * 4 * 60 * 1000;
@@ -99,10 +106,11 @@ async function insertDemoUser() {
       }
       
       mockUsers.push({
-        email: `user${Math.floor((Math.random() * 40) % 50)}@example.com`,
+        email: `user${i + 1}@example.com`,
         password: bcrypt.hashSync('password123', 10),
         startTime: startTime,
         endTime: endTime,
+        queueJoinTime: queueJoinTime,
         isActive: Math.random() > 0.7
       });
     }
@@ -114,11 +122,15 @@ async function insertDemoUser() {
       const sessionDuration = Math.random() * 4 * 60 * 1000;
       const repeatEndTime = new Date(repeatStartTime.getTime() + sessionDuration);
       
+      // Queue join time for repeat users is before their repeat start time
+      const repeatQueueJoinTime = new Date(repeatStartTime.getTime() - (Math.random() * 30 + 5) * 60 * 1000);
+      
       mockUsers.push({
         email: baseUser.email,
         password: baseUser.password,
         startTime: repeatStartTime,
         endTime: repeatEndTime,
+        queueJoinTime: repeatQueueJoinTime,
         isActive: false
       });
     }
@@ -131,11 +143,15 @@ async function insertDemoUser() {
         const sessionDuration = Math.random() * 4 * 60 * 1000;
         const secondRepeatEndTime = new Date(secondRepeatStartTime.getTime() + sessionDuration);
         
+        // Queue join time for additional repeat users
+        const secondRepeatQueueJoinTime = new Date(secondRepeatStartTime.getTime() - (Math.random() * 30 + 5) * 60 * 1000);
+        
         mockUsers.push({
           email: baseUser.email,
           password: baseUser.password,
           startTime: secondRepeatStartTime,
           endTime: secondRepeatEndTime,
+          queueJoinTime: secondRepeatQueueJoinTime,
           isActive: false
         });
       }
@@ -163,6 +179,7 @@ const dbHelpers = {
             email: 'john@example.com',
             startTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
             endTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
+            queueJoinTime: new Date(Date.now() - 3 * 60 * 60 * 1000),
             isActive: false,
             createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000)
           },
@@ -171,6 +188,7 @@ const dbHelpers = {
             email: 'jane@example.com',
             startTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
             endTime: null,
+            queueJoinTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
             isActive: true,
             createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000)
           }
@@ -188,6 +206,7 @@ const dbHelpers = {
           email: 'john@example.com',
           startTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
           endTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
+          queueJoinTime: new Date(Date.now() - 3 * 60 * 60 * 1000),
           isActive: false,
           createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000)
         },
@@ -196,6 +215,7 @@ const dbHelpers = {
           email: 'jane@example.com',
           startTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
           endTime: null,
+          queueJoinTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
           isActive: true,
           createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000)
         }
@@ -301,7 +321,8 @@ const dbHelpers = {
           totalUsers: 2,
           activeQueue: 1,
           repeatUsers: 1,
-          avgSessions: 0
+          avgSessions: 0,
+          avgQueueWaitTime: 15.5
         };
       }
       
@@ -341,11 +362,32 @@ const dbHelpers = {
       
       const avgSessions = validSessions > 0 ? (totalSessionTime / validSessions / (1000 * 60)) : 0;
 
+      // Calculate average queue wait time (time between queueJoinTime and startTime)
+      const usersWithQueueData = await User.find({
+        ...demoUserFilter,
+        queueJoinTime: { $exists: true, $ne: null },
+        startTime: { $exists: true, $ne: null }
+      });
+      
+      let totalQueueWaitTime = 0;
+      let validQueueWaits = 0;
+      
+      usersWithQueueData.forEach(user => {
+        if (user.queueJoinTime && user.startTime) {
+          const queueWaitTime = user.startTime.getTime() - user.queueJoinTime.getTime();
+          totalQueueWaitTime += queueWaitTime;
+          validQueueWaits++;
+        }
+      });
+      
+      const avgQueueWaitTime = validQueueWaits > 0 ? (totalQueueWaitTime / validQueueWaits / (1000 * 60)) : 0;
+
       return {
         totalUsers,
         activeQueue: activeUsers,
         repeatUsers,
-        avgSessions: Math.round(avgSessions * 100) / 100
+        avgSessions: Math.round(avgSessions * 100) / 100,
+        avgQueueWaitTime: Math.round(avgQueueWaitTime * 100) / 100
       };
     } catch (error) {
       console.error('❌ Error fetching analytics:', error.message);
@@ -354,7 +396,8 @@ const dbHelpers = {
         totalUsers: 2,
         activeQueue: 1,
         repeatUsers: 1,
-        avgSessions: 0
+        avgSessions: 0,
+        avgQueueWaitTime: 15.5
       };
     }
   },

@@ -1,0 +1,26 @@
+{
+  "watch": [
+    "server.js",
+    "routes/",
+    "services/",
+    "config/",
+    "middleware/"
+  ],
+  "ignore": [
+    "node_modules/",
+    "screenshots/",
+    "chrome-automation-profile/",
+    "*.png",
+    "*.jpg",
+    "*.jpeg",
+    "*.log",
+    "test-*.js",
+    "debug_*.png"
+  ],
+  "ext": "js,json",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": "1000",
+  "verbose": true
+}

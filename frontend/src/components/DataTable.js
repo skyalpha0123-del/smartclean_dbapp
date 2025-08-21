@@ -29,7 +29,8 @@ const DataTable = () => {
         id: user._id || user.id || null,
         email: user.email || '',
         startTime: user.startTime || null,
-        endTime: user.endTime || null
+        endTime: user.endTime || null,
+        queueJoinTime: user.queueJoinTime || null
       }));
       
       console.log('Sanitized data:', sanitizedData);
@@ -213,6 +214,9 @@ const DataTable = () => {
                      <th onClick={() => handleSort('email')} className="sortable">
                        Email {renderSortIcon('email')}
                      </th>
+                     <th onClick={() => handleSort('queueJoinTime')} className="sortable">
+                       Queue Join Time {renderSortIcon('queueJoinTime')}
+                     </th>
                 <th onClick={() => handleSort('startTime')} className="sortable">
                   Start Time {renderSortIcon('startTime')}
                 </th>
@@ -225,6 +229,9 @@ const DataTable = () => {
                      {currentData.map((item) => (
                        <tr key={item.id || item._id}>
                          <td>{item.email || 'N/A'}</td>
+                         <td>
+                           {item.queueJoinTime ? new Date(item.queueJoinTime).toLocaleString() : 'Not joined'}
+                         </td>
                   <td>
                     {item.startTime ? new Date(item.startTime).toLocaleString() : 'Not started'}
                   </td>

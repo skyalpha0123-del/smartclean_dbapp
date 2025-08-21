@@ -19,6 +19,8 @@ frontend/build/
 frontend/dist/
 
 # Database files
+backend/screenshots
+backend/chrome-automation-profile
 backend/data/
 *.db
 *.sqlite
