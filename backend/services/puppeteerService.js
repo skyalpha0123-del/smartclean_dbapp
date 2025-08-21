@@ -442,8 +442,10 @@ class PuppeteerService {
       await new Promise(resolve => setTimeout(resolve, 3000));
 
       await page.waitForSelector(logSelector);
-      await page.exposeFunction("onLogChanged", (newLog) => {
+      await page.exposeFunction("onLogChanged", async (newLog) => {
         console.log("New log detected:", newLog);
+        // Process the DOM change event
+        await this.handleDomChangeEvent(newLog);
       });
 
       await page.evaluate((logSelector) => {
@@ -609,14 +611,33 @@ class PuppeteerService {
       // Parse the event data: [time, actionType, description]
       const [timeString, actionType, description] = eventData;
       
+      // Create a unique event identifier for deduplication
+      const eventId = `${actionType}_${description}_${timeString}`;
+      
+      // Check if we've already processed this exact event
+      if (this.processedEvents && this.processedEvents.has(eventId)) {
+        console.log(`🔄 Event already processed, skipping: ${eventId}`);
+        return;
+      }
+      
+      // Initialize processed events set if it doesn't exist
+      if (!this.processedEvents) {
+        this.processedEvents = new Set();
+      }
+      
+      // Mark this event as processed
+      this.processedEvents.add(eventId);
+      
+      console.log(`🆕 Processing new event: ${eventId}`);
+      
       // Ignore SESSION_PREFLIGHT events
       if (actionType === 'SESSION_PREFLIGHT') {
         console.log('⏭️  Ignoring SESSION_PREFLIGHT event');
         return;
       }
       
-      // Extract username from description
-      const userMatch = description.match(/^(\w+)/);
+      // Extract username from description (from beginning to first whitespace)
+      const userMatch = description.match(/^([^\s]+)/);
       if (!userMatch) {
         console.log('⚠️  Could not extract username from description:', description);
         return;
@@ -685,22 +706,36 @@ class PuppeteerService {
         isActive: false
       };
       
+      console.log(`🔍 Checking if user exists: ${userData.email}`);
+      
       // Check if user already exists
       const existingUser = await dbHelpers.getUserByEmail(userData.email);
       
       if (existingUser) {
-        // Update existing user with new queue join time
-        await dbHelpers.updateUser(existingUser._id, {
-          queueJoinTime: timestamp,
-          startTime: null,
-          endTime: null,
-          isActive: false
-        });
-        console.log(`✅ Updated existing user ${username} with new queue join time`);
+        // Check if the user has a completed session (all three timestamps present)
+        const hasCompletedSession = existingUser.queueJoinTime && existingUser.startTime && existingUser.endTime;
+        
+        if (hasCompletedSession) {
+          console.log(`🔄 User ${username} has completed session, creating new record for new queue join`);
+          // Create new user record for new session
+          const result = await dbHelpers.createUserWithFields(userData);
+          console.log(`✅ Created new user record for ${username} with new queue join time. User ID: ${result.id}`);
+        } else {
+          console.log(`📝 User ${username} has incomplete session, updating existing record`);
+          // Update existing user with new queue join time (for incomplete sessions)
+          await dbHelpers.updateUserFields(existingUser._id, {
+            queueJoinTime: timestamp,
+            startTime: null,
+            endTime: null,
+            isActive: false
+          });
+          console.log(`✅ Updated existing user ${username} with new queue join time`);
+        }
       } else {
+        console.log(`🆕 User doesn't exist, creating new user`);
         // Create new user
-        await dbHelpers.createUser(userData.email, userData.password);
-        console.log(`✅ Created new user ${username} with queue join time`);
+        const result = await dbHelpers.createUserWithFields(userData);
+        console.log(`✅ Created new user ${username} with queue join time. User ID: ${result.id}`);
       }
       
     } catch (error) {
@@ -713,14 +748,16 @@ class PuppeteerService {
       console.log(`🚀 Processing SESSION_START for user: ${username}`);
       
       const email = `${username}@smartclean.se`;
-      const user = await dbHelpers.getUserByEmail(email);
+      // Find the active user record (most recent incomplete session)
+      const user = await dbHelpers.getActiveUserByEmail(email);
       
       if (user) {
+        console.log(`📝 Found active user record for ${username}, updating start time`);
         // Update startTime for the user
         await dbHelpers.startSession(user._id);
         console.log(`✅ Updated start time for user ${username}`);
       } else {
-        console.log(`⚠️  User ${username} not found for SESSION_START`);
+        console.log(`⚠️  No active user record found for ${username} in SESSION_START`);
       }
       
     } catch (error) {
@@ -733,14 +770,16 @@ class PuppeteerService {
       console.log(`🏁 Processing SESSION_END for user: ${username}`);
       
       const email = `${username}@smartclean.se`;
-      const user = await dbHelpers.getUserByEmail(email);
+      // Find the active user record (most recent incomplete session)
+      const user = await dbHelpers.getActiveUserByEmail(email);
       
       if (user && user.startTime) {
+        console.log(`📝 Found active user record for ${username}, updating end time`);
         // Update endTime for the user
         await dbHelpers.endSession(user._id);
         console.log(`✅ Updated end time for user ${username}`);
       } else {
-        console.log(`⚠️  User ${username} not found or missing start time for SESSION_END`);
+        console.log(`⚠️  No active user record found for ${username} or missing start time for SESSION_END`);
       }
       
     } catch (error) {

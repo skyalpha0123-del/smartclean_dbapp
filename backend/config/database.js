@@ -239,6 +239,24 @@ const dbHelpers = {
     }
   },
 
+  getActiveUserByEmail: async (email) => {
+    try {
+      // Find the most recent user record that doesn't have a completed session
+      // (missing startTime or endTime) and has the most recent queueJoinTime
+      return await User.findOne({ 
+        email,
+        $or: [
+          { startTime: { $exists: false } },
+          { startTime: null },
+          { endTime: { $exists: false } },
+          { endTime: null }
+        ]
+      }).sort({ queueJoinTime: -1 });
+    } catch (error) {
+      throw error;
+    }
+  },
+
   createUser: async (email, password) => {
     try {
       const bcrypt = require('bcryptjs');
@@ -258,11 +276,48 @@ const dbHelpers = {
     }
   },
 
+  createUserWithFields: async (userData) => {
+    try {
+      const bcrypt = require('bcryptjs');
+      const hashedPassword = bcrypt.hashSync(userData.password, 10);
+      
+      const user = await User.create({
+        email: userData.email,
+        password: hashedPassword,
+        queueJoinTime: userData.queueJoinTime,
+        startTime: userData.startTime,
+        endTime: userData.endTime,
+        isActive: userData.isActive
+      });
+      
+      return {
+        id: user._id,
+        email: user.email
+      };
+    } catch (error) {
+      throw error;
+    }
+  },
+
   updateUser: async (id, email) => {
     try {
       const user = await User.findByIdAndUpdate(
         id,
         { email },
+        { new: true, runValidators: true }
+      ).select('-password');
+      
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  updateUserFields: async (id, updateData) => {
+    try {
+      const user = await User.findByIdAndUpdate(
+        id,
+        updateData,
         { new: true, runValidators: true }
       ).select('-password');
       
