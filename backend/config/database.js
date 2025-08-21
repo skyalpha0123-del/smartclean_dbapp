@@ -21,7 +21,6 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Email is required'],
-    unique: true,
     lowercase: true,
     trim: true,
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
@@ -74,87 +73,76 @@ async function insertDemoUser() {
     const mockUsersCount = await User.countDocuments({ email: { $regex: /^user\d+@example\.com$/ } });
     console.log(`🔍 Found ${mockUsersCount} existing mock users`);
     
-    if (mockUsersCount === 0 || totalUsers < 50) {
-      if (mockUsersCount > 0) {
-        console.log(`⚠️  Clearing ${mockUsersCount} existing mock users and regenerating`);
-        const deleteResult = await User.deleteMany({ email: { $regex: /^user\d+@example\.com$/ } });
-        console.log(`🗑️  Deleted ${deleteResult.deletedCount} mock users`);
+    console.log(`🗑️  Deleting all existing mock data`);
+    await User.deleteMany({ email: { $regex: /^user\d+@example\.com$/ } });
+    
+    console.log(`🔄  Creating new mock data with repeat emails`);
+    const mockUsers = [];
+    
+    const baseUsersCount = 50;
+    const baseDate = new Date('2025-08-01T00:00:00Z');
+    
+    for (let i = 0; i < baseUsersCount; i++) {
+      const randomDays = Math.random() * 20;
+      const randomHours = Math.random() * 24;
+      const randomMinutes = Math.random() * 60;
+      
+      const startTime = new Date(baseDate.getTime() + 
+        (randomDays * 24 * 60 * 60 * 1000) + 
+        (randomHours * 60 * 60 * 1000) + 
+        (randomMinutes * 60 * 1000));
+      
+      let endTime = null;
+      if (Math.random() > 0.3) {
+        const sessionDuration = Math.random() * 4 * 60 * 1000;
+        endTime = new Date(startTime.getTime() + sessionDuration);
       }
-      console.log(`⚠️  Generating 50 new mock users with repeat sessions`);
       
-      const mockUsers = [];
+      mockUsers.push({
+        email: `user${Math.floor((Math.random() * 40) % 50)}@example.com`,
+        password: bcrypt.hashSync('password123', 10),
+        startTime: startTime,
+        endTime: endTime,
+        isActive: Math.random() > 0.7
+      });
+    }
+    
+    const repeatEmailsCount = Math.floor(baseUsersCount * 0.6);
+    for (let i = 0; i < repeatEmailsCount; i++) {
+      const baseUser = mockUsers[i];
+      const repeatStartTime = new Date(baseUser.startTime.getTime() + (24 * 60 * 60 * 1000));
+      const sessionDuration = Math.random() * 4 * 60 * 1000;
+      const repeatEndTime = new Date(repeatStartTime.getTime() + sessionDuration);
       
-      const usersToCreate = 50;
-      const baseDate = new Date('2025-08-01T00:00:00Z');
-      const endDate = new Date('2025-08-20T23:59:59Z');
-      
-      for (let i = 0; i < usersToCreate; i++) {
-        const isActive = Math.random() > 0.7;
-        const hasEndTime = Math.random() > 0.3;
-        
-        const randomDays = Math.random() * 20;
-        const randomHours = Math.random() * 24;
-        const randomMinutes = Math.random() * 60;
-        
-        const startTime = new Date(baseDate.getTime() + 
-          (randomDays * 24 * 60 * 60 * 1000) + 
-          (randomHours * 60 * 60 * 1000) + 
-          (randomMinutes * 60 * 1000));
-        
-        let endTime = null;
-        if (hasEndTime) {
-          const sessionDuration = Math.random() * 4 * 60 * 1000;
-          endTime = new Date(startTime.getTime() + sessionDuration);
-        }
+      mockUsers.push({
+        email: baseUser.email,
+        password: baseUser.password,
+        startTime: repeatStartTime,
+        endTime: repeatEndTime,
+        isActive: false
+      });
+    }
+    
+    const additionalRepeatEmailsCount = Math.floor(baseUsersCount * 0.3);
+    for (let i = 0; i < additionalRepeatEmailsCount; i++) {
+      const baseUser = mockUsers[i + repeatEmailsCount];
+      if (baseUser) {
+        const secondRepeatStartTime = new Date(baseUser.startTime.getTime() + (48 * 60 * 60 * 1000));
+        const sessionDuration = Math.random() * 4 * 60 * 1000;
+        const secondRepeatEndTime = new Date(secondRepeatStartTime.getTime() + sessionDuration);
         
         mockUsers.push({
-          email: `user${i + 1}@example.com`,
-          password: bcrypt.hashSync('password123', 10),
-          startTime: startTime,
-          endTime: endTime,
-          isActive: isActive
+          email: baseUser.email,
+          password: baseUser.password,
+          startTime: secondRepeatStartTime,
+          endTime: secondRepeatEndTime,
+          isActive: false
         });
       }
-      
-      const repeatEmailsCount = Math.floor(usersToCreate * 0.6);
-      for (let i = 0; i < repeatEmailsCount; i++) {
-        const baseUser = mockUsers[i];
-        if (baseUser.startTime) {
-          const repeatStartTime = new Date(baseUser.startTime.getTime() + (24 * 60 * 60 * 1000));
-          const sessionDuration = Math.random() * 4 * 60 * 1000;
-          const repeatEndTime = new Date(repeatStartTime.getTime() + sessionDuration);
-          
-          mockUsers.push({
-            email: baseUser.email,
-            password: baseUser.password,
-            startTime: repeatStartTime,
-            endTime: repeatEndTime,
-            isActive: false
-          });
-        }
-      }
-      
-      const additionalRepeatEmailsCount = Math.floor(usersToCreate * 0.3);
-      for (let i = 0; i < additionalRepeatEmailsCount; i++) {
-        const baseUser = mockUsers[i + repeatEmailsCount];
-        if (baseUser && baseUser.startTime) {
-          const secondRepeatStartTime = new Date(baseUser.startTime.getTime() + (48 * 60 * 60 * 1000));
-          const sessionDuration = Math.random() * 4 * 60 * 1000;
-          const secondRepeatEndTime = new Date(secondRepeatStartTime.getTime() + sessionDuration);
-          
-          mockUsers.push({
-            email: baseUser.email,
-            password: baseUser.password,
-            startTime: secondRepeatStartTime,
-            endTime: secondRepeatEndTime,
-            isActive: false
-          });
-        }
-      }
-      
-      await User.create(mockUsers);
-      console.log('✅ 50 mock users created successfully for testing');
     }
+    
+    await User.create(mockUsers);
+    console.log(`✅ Created ${mockUsers.length} mock users with repeat emails`);
   } catch (error) {
     console.error('❌ Error initializing demo user:', error.message);
   }
@@ -386,4 +374,4 @@ const dbHelpers = {
   }
 };
 
-module.exports = { mongoose, dbHelpers };
+module.exports = { mongoose, dbHelpers, insertDemoUser };
