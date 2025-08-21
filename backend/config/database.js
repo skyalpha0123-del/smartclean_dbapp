@@ -374,7 +374,7 @@ const dbHelpers = {
         console.log('⚠️  Database not connected, returning mock analytics');
         return {
           totalUsers: 2,
-          activeQueue: 1,
+          activeQueue: 1, // Users in queue waiting to start session
           repeatUsers: 1,
           avgSessions: 0,
           avgQueueWaitTime: 15.5
@@ -384,9 +384,15 @@ const dbHelpers = {
       const demoUserFilter = { email: { $ne: 'demoe@smartclean.se' } };
       
       const totalUsers = await User.countDocuments(demoUserFilter);
-      const activeUsers = await User.countDocuments({ 
+      
+      // Count users who joined queue but haven't started session yet
+      const activeQueueUsers = await User.countDocuments({ 
         ...demoUserFilter, 
-        isActive: true 
+        queueJoinTime: { $exists: true, $ne: null },
+        $or: [
+          { startTime: { $exists: false } },
+          { startTime: null }
+        ]
       });
       
       const usersWithMultipleSessions = await User.aggregate([
@@ -439,7 +445,7 @@ const dbHelpers = {
 
       return {
         totalUsers,
-        activeQueue: activeUsers,
+        activeQueue: activeQueueUsers,
         repeatUsers,
         avgSessions: Math.round(avgSessions * 100) / 100,
         avgQueueWaitTime: Math.round(avgQueueWaitTime * 100) / 100

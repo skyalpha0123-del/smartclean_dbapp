@@ -65,7 +65,7 @@ const InfoSection = () => {
             <div className="metric-icon">⏰</div>
             <div className="metric-label">Active Queue</div>
             <div className="metric-value">{loading ? '...' : analyticsData.activeQueue}</div>
-            <div className="metric-description">Currently in queue</div>
+            <div className="metric-description">Users waiting to start session</div>
           </div>
           
           <div className="metric-card">
