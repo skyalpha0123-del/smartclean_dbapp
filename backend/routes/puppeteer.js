@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const puppeteerService = require('../services/puppeteerService');
-const path = require('path');
-const fs = require('fs').promises;
+
+
 
 router.get('/test', (req, res) => {
   res.json({
@@ -76,43 +76,7 @@ router.post('/navigate', async (req, res) => {
   }
 });
 
-router.post('/screenshot', async (req, res) => {
-  try {
-    const { fullPage = false, quality = 80 } = req.body;
-    
-    if (!puppeteerService.isBrowserRunning()) {
-      return res.status(400).json({
-        success: false,
-        error: 'Browser not running. Launch browser first.'
-      });
-    }
 
-    const screenshot = await puppeteerService.takeScreenshot({
-      fullPage,
-      quality
-    });
-    
-    const filename = `screenshot_${Date.now()}.png`;
-    const filepath = path.join(__dirname, '..', 'screenshots', filename);
-    
-    await fs.mkdir(path.dirname(filepath), { recursive: true });
-    await fs.writeFile(filepath, screenshot);
-    
-    res.json({
-      success: true,
-      message: 'Screenshot taken successfully',
-      filename,
-      filepath: `/screenshots/${filename}`,
-      size: screenshot.length
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Failed to take screenshot',
-      message: error.message
-    });
-  }
-});
 
 router.post('/extract-text', async (req, res) => {
   try {
@@ -461,37 +425,7 @@ router.post('/refresh-target', async (req, res) => {
   }
 });
 
-router.post('/target-screenshot', async (req, res) => {
-  try {
-    const { fullPage = true, quality = 90 } = req.body;
-    
-    const result = await puppeteerService.takeTargetSiteScreenshot({
-      fullPage,
-      quality
-    });
-    
-    const filename = `target_site_${Date.now()}.png`;
-    const filepath = path.join(__dirname, '..', 'screenshots', filename);
-    
-    await fs.mkdir(path.dirname(filepath), { recursive: true });
-    await fs.writeFile(filepath, result.screenshot);
-    
-    res.json({
-      success: true,
-      message: 'Target site screenshot taken successfully',
-      filename,
-      filepath: `/screenshots/${filename}`,
-      targetSite: result.targetSite,
-      timestamp: result.timestamp
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Failed to take target site screenshot',
-      message: error.message
-    });
-  }
-});
+
 
 router.get('/email-status', async (req, res) => {
   try {
@@ -607,13 +541,6 @@ router.post('/navigate-to-email-urls', async (req, res) => {
       const page = await puppeteerService.browser.newPage();
       await page.goto(url, { waitUntil: 'networkidle2' });
       
-      // Take screenshot
-      const screenshotName = `manual_navigation_${Date.now()}.png`;
-      await page.screenshot({ 
-        path: `./screenshots/${screenshotName}`,
-        fullPage: true 
-      });
-      
       await page.close();
       
       res.json({
@@ -621,7 +548,6 @@ router.post('/navigate-to-email-urls', async (req, res) => {
         message: 'URL navigation completed',
         data: {
           url,
-          screenshot: screenshotName,
           navigationSuccess: true
         }
       });
@@ -701,6 +627,57 @@ router.get('/get-new-elements', async (req, res) => {
   }
 });
 
+router.get('/get-content-changes', async (req, res) => {
+  try {
+    if (!puppeteerService.isBrowserRunning()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Browser not running. Launch browser first.'
+      });
+    }
+
+    const contentChanges = await puppeteerService.getContentChanges();
+    
+    res.json({
+      success: true,
+      message: 'Content changes retrieved successfully',
+      count: contentChanges.length,
+      changes: contentChanges
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get content changes',
+      message: error.message
+    });
+  }
+});
+
+router.get('/get-all-dom-changes', async (req, res) => {
+  try {
+    if (!puppeteerService.isBrowserRunning()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Browser not running. Launch browser first.'
+      });
+    }
+
+    const allChanges = await puppeteerService.getAllDOMChanges();
+    
+    res.json({
+      success: true,
+      message: 'All DOM changes retrieved successfully',
+      data: allChanges
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get all DOM changes',
+      message: error.message
+    });
+  }
+});
+
 router.post('/wait-for-new-elements', async (req, res) => {
   try {
     const { 
@@ -726,6 +703,36 @@ router.post('/wait-for-new-elements', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to wait for new elements',
+      message: error.message
+    });
+  }
+});
+
+router.post('/wait-for-content-changes', async (req, res) => {
+  try {
+    const { 
+      targetSelector = 'div[class*="bg-black rounded-2xl p-4 min-h-[300px] font-mono text-sm"]',
+      maxWaitTime = 30000 
+    } = req.body;
+    
+    if (!puppeteerService.isBrowserRunning()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Browser not running. Launch browser first.'
+      });
+    }
+
+    const result = await puppeteerService.waitForContentChanges(targetSelector, maxWaitTime);
+    
+    res.json({
+      success: true,
+      message: 'Wait for content changes completed',
+      result
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to wait for content changes',
       message: error.message
     });
   }

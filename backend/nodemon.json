@@ -15,12 +15,29 @@
     "*.jpeg",
     "*.log",
     "test-*.js",
-    "debug_*.png"
+    "debug_*.png",
+    "*.tmp",
+    "*.temp",
+    "*.cache",
+    "logs/",
+    "temp/",
+    "cache/",
+    ".env.local",
+    ".env.*.local",
+    "*.pid",
+    "*.lock",
+    "chrome-automation-profile/**/*",
+    "**/chrome-automation-profile/**/*"
   ],
   "ext": "js,json",
   "env": {
     "NODE_ENV": "development"
   },
-  "delay": "1000",
-  "verbose": true
+  "delay": "2000",
+  "verbose": true,
+  "legacyWatch": false,
+  "polling": false,
+  "restartable": "rs",
+  "colours": true,
+  "quiet": false
 }

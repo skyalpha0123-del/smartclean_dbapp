@@ -8,7 +8,6 @@ const InfoSection = () => {
     activeQueue: 0,
     repeatUsers: 0,
     avgSessions: 0,
-    avgQueueWaitTime: 0,
     siteStatus: {
       isOnline: false,
       lastChecked: null,
@@ -83,12 +82,7 @@ const InfoSection = () => {
             <div className="metric-description">Minutes per session</div>
           </div>
           
-          <div className="metric-card">
-            <div className="metric-icon">⏳</div>
-            <div className="metric-label">Avg Queue Wait</div>
-            <div className="metric-value">{loading ? '...' : `${analyticsData.avgQueueWaitTime.toFixed(1)} min`}</div>
-            <div className="metric-description">Minutes in queue</div>
-          </div>
+
         </div>
       </div>
     </div>

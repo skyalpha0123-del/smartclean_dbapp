@@ -1,5 +1,6 @@
 const puppeteer = require('puppeteer');
 const imap = require('./emailService');
+const { dbHelpers } = require('../config/database');
 
 class PuppeteerService {
   constructor() {
@@ -87,24 +88,7 @@ class PuppeteerService {
     }
   }
 
-  async takeScreenshot(options = {}) {
-    try {
-      if (!this.page) {
-        throw new Error('Browser not launched. Call launchBrowser() first.');
-      }
 
-      const defaultOptions = {
-        path: options.path || `screenshot_${Date.now()}.png`,
-        fullPage: options.fullPage || false,
-        quality: options.quality || 80
-      };
-
-      const screenshot = await this.page.screenshot(defaultOptions);
-      return screenshot;
-    } catch (error) {
-      throw new Error(`Failed to take screenshot: ${error.message}`);
-    }
-  }
 
   async extractText(selector) {
     try {
@@ -374,7 +358,10 @@ class PuppeteerService {
       const page = await this.browser.newPage();
       await page.goto(this.targetSite);
       console.log(`✅ Connected to target site: ${this.targetSite}`);
-      
+
+      // const logSelector = ".space-y-1.max-h-64.overflow-y-auto";
+      const logSelector = ".space-y-1.max-h-64.overflow-y-auto";
+
       // Add a small delay so you can see the navigation
       await new Promise(resolve => setTimeout(resolve, 10000));
       console.log('👁️  You should now see the target site in the browser window');
@@ -453,12 +440,32 @@ class PuppeteerService {
 
       // Wait for page to load after login
       await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Set up DOM monitoring for the target selector
-      console.log('🔍 Setting up DOM monitoring after admin login...');
-      await this.setupDOMMonitoring('div[class*="bg-black rounded-2xl p-4 min-h-[300px] font-mono text-sm"]');
-      
-      console.log('✅ DOM monitoring is now active');
+
+      await page.waitForSelector(logSelector);
+      await page.exposeFunction("onLogChanged", (newLog) => {
+        console.log("New log detected:", newLog);
+      });
+
+      await page.evaluate((logSelector) => {
+        const targetNode = document.querySelector(logSelector);
+
+        console.log('🔍 Target node:', targetNode);
+
+        if (!targetNode) return;
+
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+              if (node.nodeType === 1 && node.classList.contains("text-gray-300")) {
+                const text = Array.from(node.children).map(child => child.innerText.trim());
+                window.onLogChanged(text);
+              }
+            });
+          });
+        });
+
+        observer.observe(targetNode, { childList: true });
+      }, logSelector);
       
       this.isInitialized = true;
       console.log('🎉 Puppeteer initialization completed successfully!');
@@ -531,30 +538,6 @@ class PuppeteerService {
     }
   }
 
-  async takeTargetSiteScreenshot(options = {}) {
-    try {
-      if (!this.isInitialized || !this.isBrowserRunning()) {
-        throw new Error('Puppeteer not initialized. Call initializeTargetSite() first.');
-      }
-
-      const screenshot = await this.takeScreenshot({
-        fullPage: options.fullPage || true,
-        quality: options.quality || 90,
-        ...options
-      });
-
-      return {
-        success: true,
-        message: 'Target site screenshot taken successfully',
-        screenshot,
-        targetSite: this.targetSite,
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      throw new Error(`Failed to take target site screenshot: ${error.message}`);
-    }
-  }
-
   async waitForEmailUpdate(maxWaitTime = 60000, checkInterval = 2000) {
     try {
       console.log('⏳ Waiting for email service to receive new email...');
@@ -621,139 +604,151 @@ class PuppeteerService {
     }
   }
 
-  async setupDOMMonitoring(targetSelector = 'div[class*="bg-black"]') {
+  async handleDomChangeEvent(eventData) {
     try {
-      if (!this.page) {
-        throw new Error('Page not available. Call launchBrowser() first.');
-      }
-
-      console.log('🔍 Setting up DOM monitoring for selector:', targetSelector);
+      // Parse the event data: [time, actionType, description]
+      const [timeString, actionType, description] = eventData;
       
-      // Set up MutationObserver to watch for DOM changes
-      await this.page.evaluate((selector) => {
-        // Store initial elements
-        window.initialElements = Array.from(document.querySelectorAll(selector));
-        console.log('📋 Initial elements found:', window.initialElements.length);
-        
-        // Set up MutationObserver
-        window.domObserver = new MutationObserver((mutations) => {
-          mutations.forEach((mutation) => {
-            if (mutation.type === 'childList') {
-              // Check for new nodes added
-              mutation.addedNodes.forEach((node) => {
-                console.log(node, '!@!@!@!@!@!@node');
-                if (node.nodeType === Node.ELEMENT_NODE) {
-                  // Check if the new node matches our selector
-                  if (node.matches && node.matches(selector)) {
-                    console.log('🆕 New matching element added:', node);
-                    window.newElements = window.newElements || [];
-                    window.newElements.push(node);
-                  }
-                  
-                  // Check if any descendants match our selector
-                  const descendants = node.querySelectorAll ? node.querySelectorAll(selector) : [];
-                  descendants.forEach((descendant) => {
-                    if (!window.initialElements.includes(descendant)) {
-                      console.log('🆕 New descendant element found:', descendant);
-                      window.newElements = window.newElements || [];
-                      window.newElements.push(descendant);
-                    }
-                  });
-                }
-              });
-            }
-          });
+      // Ignore SESSION_PREFLIGHT events
+      if (actionType === 'SESSION_PREFLIGHT') {
+        console.log('⏭️  Ignoring SESSION_PREFLIGHT event');
+        return;
+      }
+      
+      // Extract username from description
+      const userMatch = description.match(/^(\w+)/);
+      if (!userMatch) {
+        console.log('⚠️  Could not extract username from description:', description);
+        return;
+      }
+      
+      const username = userMatch[1];
+      console.log(`👤 Extracted username: ${username}`);
+      
+      // Build timestamp from time string
+      const today = new Date();
+      const timeParts = timeString.match(/(\d+):(\d+):(\d+)\s*(AM|PM)/i);
+      if (!timeParts) {
+        console.log('⚠️  Could not parse time format:', timeString);
+        return;
+      }
+      
+      let hours = parseInt(timeParts[1]);
+      const minutes = parseInt(timeParts[2]);
+      const seconds = parseInt(timeParts[3]);
+      const period = timeParts[4].toUpperCase();
+      
+      // Convert to 24-hour format
+      if (period === 'PM' && hours !== 12) {
+        hours += 12;
+      } else if (period === 'AM' && hours === 12) {
+        hours = 0;
+      }
+      
+      const timestamp = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes, seconds);
+      console.log(`⏰ Built timestamp: ${timestamp.toISOString()}`);
+      
+      // Handle different action types
+      switch (actionType) {
+        case 'QUEUE_JOIN':
+          await this.handleQueueJoin(username, timestamp);
+          break;
+          
+        case 'SESSION_START':
+          await this.handleSessionStart(username, timestamp);
+          break;
+          
+        case 'SESSION_END':
+          await this.handleSessionEnd(username, timestamp);
+          break;
+          
+        default:
+          console.log(`⚠️  Unknown action type: ${actionType}`);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error handling DOM change event:', error.message);
+    }
+  }
+  
+  async handleQueueJoin(username, timestamp) {
+    try {
+      console.log(`📝 Processing QUEUE_JOIN for user: ${username}`);
+      
+      // Create a new record for the user
+      const userData = {
+        email: `${username}@smartclean.se`, // Generate email from username
+        password: 'temp_password', // Temporary password
+        queueJoinTime: timestamp,
+        startTime: null,
+        endTime: null,
+        isActive: false
+      };
+      
+      // Check if user already exists
+      const existingUser = await dbHelpers.getUserByEmail(userData.email);
+      
+      if (existingUser) {
+        // Update existing user with new queue join time
+        await dbHelpers.updateUser(existingUser._id, {
+          queueJoinTime: timestamp,
+          startTime: null,
+          endTime: null,
+          isActive: false
         });
-        
-        // Start observing
-        window.domObserver.observe(document.body, {
-          childList: true,
-          subtree: true
-        });
-        
-        console.log('✅ DOM monitoring started');
-      }, targetSelector);
-      
-      return true;
-    } catch (error) {
-      console.error('❌ Failed to setup DOM monitoring:', error.message);
-      throw error;
-    }
-  }
-
-  async getNewElements() {
-    try {
-      if (!this.page) {
-        throw new Error('Page not available. Call launchBrowser() first.');
-      }
-
-      const newElements = await this.page.evaluate(() => {
-        return window.newElements || [];
-      });
-      
-      return newElements;
-    } catch (error) {
-      console.error('❌ Failed to get new elements:', error.message);
-      throw error;
-    }
-  }
-
-  async waitForNewElements(targetSelector = 'div[class*="bg-black rounded-2xl p-4 min-h-[300px] font-mono text-sm"]', maxWaitTime = 30000) {
-    try {
-      console.log('⏳ Waiting for new DOM elements matching selector:', targetSelector);
-      
-      const startTime = Date.now();
-      
-      while (Date.now() - startTime < maxWaitTime) {
-        const newElements = await this.getNewElements();
-        
-        if (newElements && newElements.length > 0) {
-          console.log('✅ New elements detected:', newElements.length);
-          return {
-            success: true,
-            count: newElements.length,
-            elements: newElements
-          };
-        }
-        
-        // Wait before next check
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        console.log(`⏳ Still waiting for new elements... (${elapsed}s elapsed)`);
+        console.log(`✅ Updated existing user ${username} with new queue join time`);
+      } else {
+        // Create new user
+        await dbHelpers.createUser(userData.email, userData.password);
+        console.log(`✅ Created new user ${username} with queue join time`);
       }
       
-      console.log('⏰ Timeout reached while waiting for new elements');
-      return { success: false, count: 0, elements: [] };
-      
     } catch (error) {
-      console.error('❌ Error in waitForNewElements:', error.message);
-      return { success: false, count: 0, elements: [] };
+      console.error(`❌ Error handling QUEUE_JOIN for ${username}:`, error.message);
     }
   }
-
-  async stopDOMMonitoring() {
+  
+  async handleSessionStart(username, timestamp) {
     try {
-      if (!this.page) {
-        throw new Error('Page not available. Call launchBrowser() first.');
+      console.log(`🚀 Processing SESSION_START for user: ${username}`);
+      
+      const email = `${username}@smartclean.se`;
+      const user = await dbHelpers.getUserByEmail(email);
+      
+      if (user) {
+        // Update startTime for the user
+        await dbHelpers.startSession(user._id);
+        console.log(`✅ Updated start time for user ${username}`);
+      } else {
+        console.log(`⚠️  User ${username} not found for SESSION_START`);
       }
-
-      console.log('🛑 Stopping DOM monitoring...');
       
-      await this.page.evaluate(() => {
-        if (window.domObserver) {
-          window.domObserver.disconnect();
-          window.domObserver = null;
-          console.log('✅ DOM monitoring stopped');
-        }
-      });
-      
-      return true;
     } catch (error) {
-      console.error('❌ Failed to stop DOM monitoring:', error.message);
-      throw error;
+      console.error(`❌ Error handling SESSION_START for ${username}:`, error.message);
     }
   }
+  
+  async handleSessionEnd(username, timestamp) {
+    try {
+      console.log(`🏁 Processing SESSION_END for user: ${username}`);
+      
+      const email = `${username}@smartclean.se`;
+      const user = await dbHelpers.getUserByEmail(email);
+      
+      if (user && user.startTime) {
+        // Update endTime for the user
+        await dbHelpers.endSession(user._id);
+        console.log(`✅ Updated end time for user ${username}`);
+      } else {
+        console.log(`⚠️  User ${username} not found or missing start time for SESSION_END`);
+      }
+      
+    } catch (error) {
+      console.error(`❌ Error handling SESSION_END for ${username}:`, error.message);
+    }
+  }
+
+
 }
 
 module.exports = new PuppeteerService();
