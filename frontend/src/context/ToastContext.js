@@ -22,10 +22,8 @@ export const ToastProvider = ({ children }) => {
         const parsedToasts = JSON.parse(persistentToasts);
         setToasts(parsedToasts);
         
-        // Clear from localStorage after loading
         localStorage.removeItem('persistentToasts');
         
-        // Set up auto-removal for each persistent toast
         parsedToasts.forEach(toast => {
           const remainingTime = toast.expiresAt - Date.now();
           if (remainingTime > 0) {
@@ -33,12 +31,10 @@ export const ToastProvider = ({ children }) => {
               removeToast(toast.id);
             }, remainingTime);
           } else {
-            // Remove expired toasts immediately
             removeToast(toast.id);
           }
         });
       } catch (error) {
-        console.error('Error parsing persistent toasts:', error);
         localStorage.removeItem('persistentToasts');
       }
     }
@@ -51,13 +47,11 @@ export const ToastProvider = ({ children }) => {
     
     setToasts(prev => [...prev, newToast]);
     
-    // If persistent, save to localStorage
     if (persistent) {
       const persistentToasts = JSON.stringify([newToast]);
       localStorage.setItem('persistentToasts', persistentToasts);
     }
     
-    // Auto-remove toast after duration
     setTimeout(() => {
       removeToast(id);
     }, duration);

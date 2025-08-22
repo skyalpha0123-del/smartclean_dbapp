@@ -22,27 +22,22 @@ const DataTable = ({ activeFilter = 'all' }) => {
     wsRef.current = new WebSocket(wsUrl);
     
     wsRef.current.onopen = () => {
-      console.log('WebSocket connected for real-time updates');
     };
     
     wsRef.current.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
         if (message.type === 'database_change') {
-          console.log('Database change detected:', message);
           fetchData();
         }
       } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
       }
     };
     
     wsRef.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
     };
     
     wsRef.current.onclose = () => {
-      console.log('WebSocket disconnected');
     };
     
     return () => {
@@ -61,7 +56,6 @@ const DataTable = ({ activeFilter = 'all' }) => {
       setLoading(true);
       const response = await axios.get('/api/users');
       const userData = response.data.data || [];
-      console.log('Raw user data:', userData);
       
       const sanitizedData = userData.map(user => ({
         id: user._id || user.id || null,
@@ -71,11 +65,9 @@ const DataTable = ({ activeFilter = 'all' }) => {
         queueJoinTime: user.queueJoinTime || null
       }));
       
-      console.log('Sanitized data:', sanitizedData);
       setData(sanitizedData);
       setError(null);
     } catch (err) {
-      console.error('Error fetching data:', err);
       if (err.code === 'ECONNREFUSED' || err.message.includes('Network Error')) {
         setError('Cannot connect to server. Please check if the backend is running.');
       } else if (err.response?.status === 500) {
@@ -99,18 +91,14 @@ const DataTable = ({ activeFilter = 'all' }) => {
 
   const getSortedData = () => {
     let filteredData = data.filter(item => {
-      // Apply filter based on activeFilter
       let matchesFilter = true;
       
       if (activeFilter === 'activeQueue') {
-        // Show only users who joined queue but haven't started session
         matchesFilter = item.queueJoinTime && !item.startTime;
       } else if (activeFilter === 'repeatUsers') {
-        // Show only users with multiple entries (we'll need to count occurrences)
         const emailCount = data.filter(d => d.email === item.email).length;
         matchesFilter = emailCount >= 2;
       }
-      // For 'all' filter, matchesFilter remains true
       
       const matchesText = Object.values(item).some(value => {
         if (value === null || value === undefined) {

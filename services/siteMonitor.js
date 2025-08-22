@@ -21,13 +21,11 @@ class SiteMonitor {
       this.isOnline = response.status >= 200 && response.status < 400;
       this.lastChecked = new Date();
       
-      console.log(`✅ Site status check: ${this.isOnline ? 'Online' : 'Offline'} - ${this.lastChecked}`);
       
     } catch (error) {
       this.isOnline = false;
       this.lastChecked = new Date();
       
-      console.log(`❌ Site status check failed: Offline - ${this.lastChecked}`);
     }
   }
 

@@ -23,7 +23,6 @@ export const AuthProvider = ({ children }) => {
           setUser(userData);
         }
       } catch (error) {
-        console.error('Error parsing stored user data:', error);
         localStorage.removeItem('user');
       }
     }

@@ -8,7 +8,6 @@ import InfoSection from './components/InfoSection';
 import DataTable from './components/DataTable';
 import ProtectedRoute from './components/ProtectedRoute';
 
-// Demo User Dialog Component
 const DemoUserDialog = ({ user, onClose }) => {
   const { showSuccess, showError } = useToast();
   const [email, setEmail] = useState(user?.email || '');
@@ -43,7 +42,7 @@ const DemoUserDialog = ({ user, onClose }) => {
         showSuccess('Demo user updated successfully!');
         setTimeout(() => {
           onClose();
-          window.location.reload(); // Refresh to show updated email
+          window.location.reload();
         }, 1500);
       } else {
         showError(result.error || 'Failed to update demo user');
@@ -145,7 +144,7 @@ const SimpleHeader = () => {
         const unique = data?.uniqueUsers || 0;
         const repeated = data?.repeatedUsers || 0;
         showPersistentSuccess(`Mock data generated successfully! 📊 Total: ${total}, 👤 Unique: ${unique}, 🔄 Repeated: ${repeated}`);
-        window.location.reload(); // Refresh to show new data
+        window.location.reload();
       } else {
         showError('Failed to generate mock data: ' + result.error);
       }
@@ -164,7 +163,7 @@ const SimpleHeader = () => {
       if (result.success) {
         const deletedCount = result.data?.deletedCount || 0;
         showPersistentSuccess(`Mock data cleared successfully! Deleted ${deletedCount} users.`);
-        window.location.reload(); // Refresh to show updated data
+        window.location.reload();
       } else {
         showError('Failed to clear mock data: ' + result.error);
       }
@@ -217,8 +216,7 @@ const SimpleHeader = () => {
         </div>
       </div>
       
-      {/* Demo User Dialog */}
-      {showDemoDialog && (
+             {showDemoDialog && (
         <DemoUserDialog 
           user={user}
           onClose={() => setShowDemoDialog(false)}

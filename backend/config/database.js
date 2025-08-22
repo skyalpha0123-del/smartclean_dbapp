@@ -7,14 +7,8 @@ mongoose.connect(MONGODB_URI, {
   useUnifiedTopology: true,
 })
 .then(() => {
-  console.log('✅ Connected to MongoDB database');
-  console.log(`📊 Database: ${mongoose.connection.name}`);
-  console.log(`🔗 URI: ${mongoose.connection.host}:${mongoose.connection.port}`);
 })
 .catch((error) => {
-  console.error('❌ MongoDB connection error:', error.message);
-  console.log('⚠️  Server will continue without database connection');
-  console.log('⚠️  Some features may not work properly');
 });
 
 const userSchema = new mongoose.Schema({
@@ -68,12 +62,9 @@ async function insertDemoUser() {
         queueJoinTime: new Date(Date.now() - 3 * 60 * 60 * 1000),
         isActive: false
       });
-      console.log('✅ Demo user created successfully with session data');
     } else {
-      console.log('✅ Demo user already exists');
     }
   } catch (error) {
-    console.error('❌ Error initializing demo user:', error.message);
   }
 }
 
@@ -81,20 +72,16 @@ async function generateMockData() {
   try {
     const bcrypt = require('bcryptjs');
     
-    // Clear existing mock data
     await User.deleteMany({ email: { $regex: /^mockuser\d+@example\.com$/ } });
-    console.log('🗑️  Cleared existing mock data');
     
     const mockUsers = [];
     const baseDate = new Date('2025-01-01T00:00:00Z');
     const usedTimeSlots = new Set();
     
-    // Create base users (30 unique users)
     for (let i = 1; i <= 30; i++) {
       const email = `mockuser${i}@example.com`;
       const password = bcrypt.hashSync('password123', 10);
       
-      // Generate queue join time (random time in the last 30 days)
       const randomDays = Math.random() * 30;
       const randomHours = Math.random() * 24;
       const randomMinutes = Math.random() * 60;
@@ -106,21 +93,16 @@ async function generateMockData() {
       let startTime = null;
       let endTime = null;
       
-      // 70% chance of having a session
       if (Math.random() < 0.7) {
-        // Generate start time (after queue join time)
-        const startTimeOffset = Math.random() * 30 * 60 * 1000; // 0-30 minutes after queue join
+        const startTimeOffset = Math.random() * 30 * 60 * 1000;
         startTime = new Date(queueJoinTime.getTime() + startTimeOffset);
         
-        // Generate end time (within 4 minutes of start time)
-        const sessionDuration = Math.random() * 3.5 * 60 * 1000; // 0-3.5 minutes
+        const sessionDuration = Math.random() * 3.5 * 60 * 1000;
         endTime = new Date(startTime.getTime() + sessionDuration);
         
-        // Check for overlapping time slots
         const timeSlotKey = `${startTime.getTime()}-${endTime.getTime()}`;
         if (usedTimeSlots.has(timeSlotKey)) {
-          // Adjust end time to avoid overlap
-          endTime = new Date(startTime.getTime() + (2 * 60 * 1000)); // 2 minutes session
+          endTime = new Date(startTime.getTime() + (2 * 60 * 1000));
         }
         usedTimeSlots.add(timeSlotKey);
       }
@@ -135,14 +117,12 @@ async function generateMockData() {
       });
     }
     
-    // Create repeated users (20 additional entries with repeated emails)
     const repeatedEmails = ['mockuser1@example.com', 'mockuser2@example.com', 'mockuser3@example.com', 'mockuser4@example.com', 'mockuser5@example.com'];
     
     for (let i = 0; i < 20; i++) {
-      const email = repeatedEmails[i % repeatedEmails.length]; // Cycle through repeated emails
+      const email = repeatedEmails[i % repeatedEmails.length];
       const password = bcrypt.hashSync('password123', 10);
       
-      // Generate queue join time (random time in the last 30 days)
       const randomDays = Math.random() * 30;
       const randomHours = Math.random() * 24;
       const randomMinutes = Math.random() * 60;
@@ -151,19 +131,15 @@ async function generateMockData() {
         (randomHours * 60 * 60 * 1000) + 
         (randomMinutes * 60 * 1000));
       
-      // For repeated users, ALWAYS have all time fields filled
-      const startTimeOffset = Math.random() * 30 * 60 * 1000; // 0-30 minutes after queue join
+      const startTimeOffset = Math.random() * 30 * 60 * 1000;
       const startTime = new Date(queueJoinTime.getTime() + startTimeOffset);
       
-      // Generate end time (within 4 minutes of start time)
-      const sessionDuration = Math.random() * 3.5 * 60 * 1000; // 0-3.5 minutes
+      const sessionDuration = Math.random() * 3.5 * 60 * 1000;
       const endTime = new Date(startTime.getTime() + sessionDuration);
       
-      // Check for overlapping time slots
       const timeSlotKey = `${startTime.getTime()}-${endTime.getTime()}`;
       if (usedTimeSlots.has(timeSlotKey)) {
-        // Adjust end time to avoid overlap
-        endTime = new Date(startTime.getTime() + (2 * 60 * 1000)); // 2 minutes session
+        endTime = new Date(startTime.getTime() + (2 * 60 * 1000));
       }
       usedTimeSlots.add(timeSlotKey);
       
@@ -173,13 +149,11 @@ async function generateMockData() {
         queueJoinTime,
         startTime,
         endTime,
-        isActive: false // Completed sessions
+        isActive: false
       });
     }
     
     await User.create(mockUsers);
-    console.log(`✅ Generated ${mockUsers.length} mock users (30 unique + 20 repeated) with non-overlapping sessions`);
-    console.log(`📊 Repeated users: ${repeatedEmails.length} emails repeated multiple times`);
     
     return { 
       success: true, 
@@ -189,7 +163,6 @@ async function generateMockData() {
       repeatedEmails: repeatedEmails
     };
   } catch (error) {
-    console.error('❌ Error generating mock data:', error.message);
     throw error;
   }
 }
@@ -197,10 +170,8 @@ async function generateMockData() {
 async function clearMockData() {
   try {
     const result = await User.deleteMany({ email: { $regex: /^mockuser\d+@example\.com$/ } });
-    console.log(`🗑️  Deleted ${result.deletedCount} mock users`);
     return { success: true, deletedCount: result.deletedCount };
   } catch (error) {
-    console.error('❌ Error clearing mock data:', error.message);
     throw error;
   }
 }
@@ -216,7 +187,6 @@ const dbHelpers = {
         email: { $ne: 'demoe@smartclean.se' } 
       }, { password: 0 }).sort({ queueJoinTime: -1 });
     } catch (error) {
-      console.error('❌ Error fetching users:', error.message);
       throw error;
     }
   },
@@ -239,8 +209,6 @@ const dbHelpers = {
 
   getActiveUserByEmail: async (email) => {
     try {
-      // Find the most recent user record that doesn't have a completed session
-      // (missing startTime or endTime) and has the most recent queueJoinTime
       return await User.findOne({ 
         email,
         $or: [
@@ -390,7 +358,6 @@ const dbHelpers = {
       
       const totalUsers = await User.countDocuments(demoUserFilter);
       
-      // Count users who joined queue but haven't started session yet
       const activeQueueUsers = await User.countDocuments({ 
         ...demoUserFilter, 
         queueJoinTime: { $exists: true, $ne: null },
@@ -428,7 +395,6 @@ const dbHelpers = {
       
       const avgSessions = validSessions > 0 ? (totalSessionTime / validSessions / (1000 * 60)) : 0;
 
-      // Calculate average queue wait time (time between queueJoinTime and startTime)
       const usersWithQueueData = await User.find({
         ...demoUserFilter,
         queueJoinTime: { $exists: true, $ne: null },
@@ -456,7 +422,6 @@ const dbHelpers = {
         avgQueueWaitTime: Math.round(avgQueueWaitTime * 100) / 100
       };
     } catch (error) {
-      console.error('❌ Error fetching analytics:', error.message);
       throw error;
     }
   },
@@ -466,7 +431,6 @@ const dbHelpers = {
       const siteMonitor = require('../services/siteMonitor');
       return siteMonitor.getStatus();
     } catch (error) {
-      console.error('❌ Error getting site status:', error.message);
       return {
         isOnline: false,
         lastChecked: new Date(),

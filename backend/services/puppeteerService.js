@@ -54,10 +54,7 @@ class PuppeteerService {
       
       // Bring browser window to front
       if (this.browser.process()) {
-        console.log('🔍 Browser process ID:', this.browser.process().pid);
       }
-      
-      console.log('👻 Browser launched in headless mode - no browser window will be visible');
       
       return this.browser;
     } catch (error) {
@@ -223,18 +220,13 @@ class PuppeteerService {
 
       return await this.debugPageElementsForPage(this.page);
     } catch (error) {
-      console.error('❌ Failed to debug page elements:', error.message);
       throw error;
     }
   }
 
   async debugPageElementsForPage(page) {
     try {
-      console.log('🔍 Debugging page elements...');
-      
-      // Get all input fields
       const inputs = await page.$$('input');
-      console.log(`📝 Found ${inputs.length} input fields:`);
       
       for (let i = 0; i < inputs.length; i++) {
         try {
@@ -244,16 +236,12 @@ class PuppeteerService {
             const placeholder = await input.evaluate(el => el.placeholder || 'No placeholder');
             const id = await input.evaluate(el => el.id || 'No id');
             const className = await input.evaluate(el => el.className || 'No class');
-            console.log(`  Input ${i + 1}: type=${type}, placeholder="${placeholder}", id="${id}", class="${className}"`);
           }
         } catch (e) {
-          console.log(`  Input ${i + 1}: Could not read - ${e.message}`);
         }
       }
       
-      // Get all buttons
       const buttons = await page.$$('button');
-      console.log(`🔘 Found ${buttons.length} buttons:`);
       
       for (let i = 0; i < buttons.length; i++) {
         try {
@@ -263,22 +251,16 @@ class PuppeteerService {
             const type = await button.evaluate(el => el.type || 'No type');
             const id = await button.evaluate(el => el.id || 'No id');
             const className = await button.evaluate(el => el.className || 'No class');
-            console.log(`  Button ${i + 1}: text="${text}", type=${type}, id="${id}", class="${className}"`);
           }
         } catch (e) {
-          console.log(`  Button ${i + 1}: Could not read - ${e.message}`);
         }
       }
       
-      // Get page title and URL
       const title = await page.title();
       const url = await page.url();
-      console.log(`📄 Page Title: ${title}`);
-      console.log(`🌐 Page URL: ${url}`);
       
       return { inputs: inputs.length, buttons: buttons.length, title, url };
     } catch (error) {
-      console.error('❌ Failed to debug page elements:', error.message);
       throw error;
     }
   }
@@ -344,46 +326,31 @@ class PuppeteerService {
   async initializeTargetSite() {
     try {
       if (this.isInitialized) {
-        console.log('✅ Puppeteer already initialized with target site');
         return true;
       }
 
-      console.log('🚀 Initializing Puppeteer for target site...');
-      
       await this.launchBrowser({ headless: true });
-      console.log('✅ Browser launched successfully');
 
       const page = await this.browser.newPage();
       await page.goto(this.targetSite);
-      console.log(`✅ Connected to target site: ${this.targetSite}`);
 
       // const logSelector = ".space-y-1.max-h-64.overflow-y-auto";
       const logSelector = ".space-y-1.max-h-64.overflow-y-auto";
 
-      // Add a small delay for the navigation to complete
       await new Promise(resolve => setTimeout(resolve, 10000));
-      console.log('🌐 Target site loaded successfully in headless browser');
 
-      console.log('🔍 Looking for email input field...');
       const inputs = await page.$$('input#email');
 
       if (inputs.length) {
-        console.log('✅ Email input field found');
         
-        // Wait for the input to be ready
         await page.waitForSelector('input[id="email"]', { timeout: 10000 });
         if (inputs.length > 1) {
-          await inputs[1].type(process.env.EMAIL_USER); // index 1 = second input
+          await inputs[1].type(process.env.EMAIL_USER);
         } else {
-          await inputs[0].type(process.env.EMAIL_USER); // index 0 = first input
+          await inputs[0].type(process.env.EMAIL_USER);
         }
-        console.log('📧 Email entered:', process.env.EMAIL_USER);
         
-        // Wait a moment for the email to be entered
         await new Promise(resolve => setTimeout(resolve, 2000));
-        console.log('📧 Email entered successfully in the input field');
-
-        console.log('🔍 Looking for submit button...');
         const buttonSelectors ='button[class*="glass-button"]';
         const submitButton = await page.$$(buttonSelectors);
 
@@ -396,24 +363,13 @@ class PuppeteerService {
         const emailResult = await this.waitForEmailUpdate();
         
         if (emailResult && emailResult.success && emailResult.url) {
-          console.log('🔗 Navigating to extracted URL from email...');
-          
           try {
             const url = emailResult.url;
-            console.log(`🌐 Navigating to: ${url}`);
             await page.goto(url, { waitUntil: 'networkidle2' });
-            console.log(await this.page.content(), '!@!@!@!@!@!@content');
-            console.log('✅ URL navigation completed successfully!');
           } catch (navigationError) {
-            console.error(`❌ Failed to navigate to ${emailResult.url}:`, navigationError.message);
           }
-        } else {
-          console.log('⚠️  No URL found in email or email processing failed');
         }
-        
-        console.log('✅ Email received and processed successfully!');
       } else {
-        console.log('❌ Email input field not found');
       }
 
       await page.waitForSelector('button[class*="inline-flex items-center justify-center gap-2 whitespace-nowrap"]', { timeout: 30000 });
@@ -469,18 +425,9 @@ class PuppeteerService {
       }, logSelector);
       
       this.isInitialized = true;
-      console.log('🎉 Puppeteer initialization completed successfully!');
       
       return true;
     } catch (error) {
-      console.error('❌ Failed to initialize Puppeteer with target site:', error.message);
-      console.log('🔍 Browser will remain open for debugging purposes');
-      console.log('💡 You can manually close it or use puppeteerService.closeBrowser()');
-      
-      // Don't automatically close the browser - let user see what happened
-      // this.isInitialized = false; // Keep it false since initialization failed
-      
-      // Return false instead of throwing error to prevent cascading failures
       return false;
     }
   }
@@ -523,11 +470,9 @@ class PuppeteerService {
         throw new Error('Puppeteer not initialized. Call initializeTargetSite() first.');
       }
 
-      console.log('🔄 Refreshing target site...');
       await this.navigateToUrl(this.targetSite);
       
       const pageInfo = await this.getPageInfo();
-      console.log(`✅ Target site refreshed. Current page: ${pageInfo.title}`);
       
       return {
         success: true,
@@ -541,22 +486,16 @@ class PuppeteerService {
 
   async waitForEmailUpdate(maxWaitTime = 60000, checkInterval = 2000) {
     try {
-      console.log('⏳ Waiting for email service to receive new email...');
-      
       const startTime = Date.now();
       let lastEmailBefore = null;
       
-      // Get initial email state
       try {
         const emailService = require('./emailService');
         lastEmailBefore = emailService.lastEmail;
-        console.log('📧 Initial email state:', lastEmailBefore ? 'Email exists' : 'No email');
       } catch (error) {
-        console.log('⚠️  Could not access email service, continuing without email check');
         return true;
       }
       
-      // Poll for email updates
       while (Date.now() - startTime < maxWaitTime) {
         try {
           const emailService = require('./emailService');
@@ -579,28 +518,20 @@ class PuppeteerService {
               console.log('🔗 URL found in email:', currentEmail.urls);
               return { success: true, url: currentEmail.urls };
             } else {
-              console.log('⚠️  No URL found in the email');
               return { success: true, url: null };
             }
           }
           
-          // Wait before next check
           await new Promise(resolve => setTimeout(resolve, checkInterval));
           
-          const elapsed = Math.floor((Date.now() - startTime) / 1000);
-          console.log(`⏳ Still waiting... (${elapsed}s elapsed)`);
-          
         } catch (error) {
-          console.log('⚠️  Error checking email service:', error.message);
           await new Promise(resolve => setTimeout(resolve, checkInterval));
         }
       }
       
-      console.log('⏰ Timeout reached while waiting for email');
       return { success: false, url: null };
       
     } catch (error) {
-      console.error('❌ Error in waitForEmailUpdate:', error.message);
       return { success: false, url: null };
     }
   }
@@ -613,43 +544,30 @@ class PuppeteerService {
       // Create a unique event identifier for deduplication
       const eventId = `${actionType}_${description}_${timeString}`;
       
-      // Check if we've already processed this exact event
       if (this.processedEvents && this.processedEvents.has(eventId)) {
-        console.log(`🔄 Event already processed, skipping: ${eventId}`);
         return;
       }
       
-      // Initialize processed events set if it doesn't exist
       if (!this.processedEvents) {
         this.processedEvents = new Set();
       }
       
-      // Mark this event as processed
       this.processedEvents.add(eventId);
       
-      console.log(`🆕 Processing new event: ${eventId}`);
-      
-      // Ignore SESSION_PREFLIGHT events
       if (actionType === 'SESSION_PREFLIGHT') {
-        console.log('⏭️  Ignoring SESSION_PREFLIGHT event');
         return;
       }
       
-      // Extract username from description (from beginning to first whitespace)
       const userMatch = description.match(/^([^\s]+)/);
       if (!userMatch) {
-        console.log('⚠️  Could not extract username from description:', description);
         return;
       }
       
       const username = userMatch[1];
-      console.log(`👤 Extracted username: ${username}`);
       
-      // Build timestamp from time string
       const today = new Date();
       const timeParts = timeString.match(/(\d+):(\d+):(\d+)\s*(AM|PM)/i);
       if (!timeParts) {
-        console.log('⚠️  Could not parse time format:', timeString);
         return;
       }
       
@@ -658,7 +576,6 @@ class PuppeteerService {
       const seconds = parseInt(timeParts[3]);
       const period = timeParts[4].toUpperCase();
       
-      // Convert to 24-hour format
       if (period === 'PM' && hours !== 12) {
         hours += 12;
       } else if (period === 'AM' && hours === 12) {
@@ -666,7 +583,6 @@ class PuppeteerService {
       }
       
       const timestamp = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes, seconds);
-      console.log(`⏰ Built timestamp: ${timestamp.toISOString()}`);
       
       // Handle different action types
       switch (actionType) {
@@ -693,12 +609,9 @@ class PuppeteerService {
   
   async handleQueueJoin(username, timestamp) {
     try {
-      console.log(`📝 Processing QUEUE_JOIN for user: ${username}`);
-      
-      // Create a new record for the user
       const userData = {
-        email: `${username}@smartclean.se`, // Generate email from username
-        password: 'temp_password', // Temporary password
+        email: `${username}@smartclean.se`,
+        password: 'temp_password',
         queueJoinTime: timestamp,
         startTime: null,
         endTime: null,

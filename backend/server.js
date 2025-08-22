@@ -45,7 +45,6 @@ app.use(cors({
 app.use(morgan('combined'));
 
 app.use((req, res, next) => {
-  console.log(`📥 ${req.method} ${req.path} - IP: ${req.ip} - X-Forwarded-For: ${req.get('X-Forwarded-For') || 'Not set'}`);
   next();
 });
 
@@ -65,7 +64,6 @@ app.use('/api/emails', require('./routes/emails'));
 app.use('/api/puppeteer', require('./routes/puppeteer'));
 
 app.use((err, req, res, next) => {
-  console.error(err.stack);
   res.status(500).json({ 
     error: 'Something went wrong!',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
@@ -104,46 +102,15 @@ const broadcastDatabaseChange = (changeType, data) => {
 global.broadcastDatabaseChange = broadcastDatabaseChange;
 
 server.listen(PORT, async () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📱 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
-  console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🗄️ Database: MongoDB`);
-  console.log(`🔒 Trust Proxy: Enabled`);
-  
   try {
-    console.log('\n📧 Initializing IMAP email service...');
     const emailInitialized = await emailService.initialize();
     
     if (emailInitialized) {
-      console.log('✅ Email service initialization completed successfully!');
-      
-      console.log('\n🤖 Initializing Puppeteer for target site...');
-      const puppeteerInitialized = await puppeteerService.initializeTargetSite();
-      
-      if (puppeteerInitialized) {
-        console.log('✅ Puppeteer initialization completed successfully!');
-      } else {
-        console.log('⚠️  Puppeteer initialization failed, but browser remains open for debugging');
-        console.log('💡 You can manually inspect the browser window to see what went wrong');
-      }
+      await puppeteerService.initializeTargetSite();
     } else {
-      console.log('⚠️  Email service not initialized, initializing Puppeteer anyway...');
-      
-      console.log('\n🤖 Initializing Puppeteer for target site...');
-      const puppeteerInitialized = await puppeteerService.initializeTargetSite();
-      
-      if (puppeteerInitialized) {
-        console.log('✅ Puppeteer initialization completed successfully!');
-      } else {
-        console.log('⚠️  Puppeteer initialization failed, but browser remains open for debugging');
-        console.log('💡 You can manually inspect the browser window to see what went wrong');
-      }
+      await puppeteerService.initializeTargetSite();
     }
-    
-    console.log('\n🎉 All services initialized successfully!');
   } catch (error) {
-    console.error('❌ Service initialization failed:', error.message);
-    console.log('⚠️  Server will continue with limited functionality');
   }
 });
 

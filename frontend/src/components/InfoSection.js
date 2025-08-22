@@ -25,27 +25,22 @@ const InfoSection = ({ onFilterChange }) => {
     wsRef.current = new WebSocket(wsUrl);
     
     wsRef.current.onopen = () => {
-      console.log('WebSocket connected for real-time analytics updates');
     };
     
     wsRef.current.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
         if (message.type === 'database_change') {
-          console.log('Database change detected, refreshing analytics:', message);
           fetchAnalyticsData();
         }
       } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
       }
     };
     
     wsRef.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
     };
     
     wsRef.current.onclose = () => {
-      console.log('WebSocket disconnected');
     };
     
     return () => {
@@ -61,9 +56,7 @@ const InfoSection = ({ onFilterChange }) => {
       const response = await axios.get('/api/analytics');
       setAnalyticsData(response.data.data);
     } catch (error) {
-      console.error('Error fetching analytics data:', error);
       if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
-        console.log('⚠️  Backend server not accessible');
       }
     } finally {
       setLoading(false);
