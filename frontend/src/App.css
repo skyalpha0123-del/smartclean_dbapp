@@ -30,6 +30,14 @@ body {
   padding: 15px 0;
 }
 
+.simple-header .header-left {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  flex-wrap: nowrap !important;
+}
+
 .header-content {
   max-width: 1200px;
   margin: 0 auto;
@@ -50,12 +58,21 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-direction: row;
 }
 
 .header-logo {
   width: 40px;
   height: 40px;
   object-fit: contain;
+  flex-shrink: 0;
+}
+
+.header-left h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--primary-color);
 }
 
 .user-info {
@@ -226,6 +243,11 @@ body {
     flex-direction: column;
     gap: 15px;
     text-align: center;
+  }
+  
+  .header-left {
+    flex-direction: row !important;
+    justify-content: center;
   }
   
   .user-info {

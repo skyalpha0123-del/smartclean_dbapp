@@ -72,93 +72,6 @@ async function insertDemoUser() {
     } else {
       console.log('✅ Demo user already exists');
     }
-
-    const totalUsers = await User.countDocuments();
-    const mockUsersCount = await User.countDocuments({ email: { $regex: /^user\d+@example\.com$/ } });
-    console.log(`🔍 Found ${mockUsersCount} existing mock users`);
-    
-    console.log(`🗑️  Deleting all existing mock data`);
-    await User.deleteMany({ email: { $regex: /^user\d+@example\.com$/ } });
-    
-    console.log(`🔄  Creating new mock data with repeat emails`);
-    const mockUsers = [];
-    
-    const baseUsersCount = 50;
-    const baseDate = new Date('2025-08-01T00:00:00Z');
-    
-    for (let i = 0; i < baseUsersCount; i++) {
-      const randomDays = Math.random() * 20;
-      const randomHours = Math.random() * 24;
-      const randomMinutes = Math.random() * 60;
-      
-      const startTime = new Date(baseDate.getTime() + 
-        (randomDays * 24 * 60 * 60 * 1000) + 
-        (randomHours * 60 * 60 * 1000) + 
-        (randomMinutes * 60 * 1000));
-      
-      // Queue join time is before start time (user joins queue first, then starts session)
-      const queueJoinTime = new Date(startTime.getTime() - (Math.random() * 30 + 5) * 60 * 1000);
-      
-      let endTime = null;
-      if (Math.random() > 0.3) {
-        const sessionDuration = Math.random() * 4 * 60 * 1000;
-        endTime = new Date(startTime.getTime() + sessionDuration);
-      }
-      
-      mockUsers.push({
-        email: `user${i + 1}@example.com`,
-        password: bcrypt.hashSync('password123', 10),
-        startTime: startTime,
-        endTime: endTime,
-        queueJoinTime: queueJoinTime,
-        isActive: Math.random() > 0.7
-      });
-    }
-    
-    const repeatEmailsCount = Math.floor(baseUsersCount * 0.6);
-    for (let i = 0; i < repeatEmailsCount; i++) {
-      const baseUser = mockUsers[i];
-      const repeatStartTime = new Date(baseUser.startTime.getTime() + (24 * 60 * 60 * 1000));
-      const sessionDuration = Math.random() * 4 * 60 * 1000;
-      const repeatEndTime = new Date(repeatStartTime.getTime() + sessionDuration);
-      
-      // Queue join time for repeat users is before their repeat start time
-      const repeatQueueJoinTime = new Date(repeatStartTime.getTime() - (Math.random() * 30 + 5) * 60 * 1000);
-      
-      mockUsers.push({
-        email: baseUser.email,
-        password: baseUser.password,
-        startTime: repeatStartTime,
-        endTime: repeatEndTime,
-        queueJoinTime: repeatQueueJoinTime,
-        isActive: false
-      });
-    }
-    
-    const additionalRepeatEmailsCount = Math.floor(baseUsersCount * 0.3);
-    for (let i = 0; i < additionalRepeatEmailsCount; i++) {
-      const baseUser = mockUsers[i + repeatEmailsCount];
-      if (baseUser) {
-        const secondRepeatStartTime = new Date(baseUser.startTime.getTime() + (48 * 60 * 60 * 1000));
-        const sessionDuration = Math.random() * 4 * 60 * 1000;
-        const secondRepeatEndTime = new Date(secondRepeatStartTime.getTime() + sessionDuration);
-        
-        // Queue join time for additional repeat users
-        const secondRepeatQueueJoinTime = new Date(secondRepeatStartTime.getTime() - (Math.random() * 30 + 5) * 60 * 1000);
-        
-        mockUsers.push({
-          email: baseUser.email,
-          password: baseUser.password,
-          startTime: secondRepeatStartTime,
-          endTime: secondRepeatEndTime,
-          queueJoinTime: secondRepeatQueueJoinTime,
-          isActive: false
-        });
-      }
-    }
-    
-    await User.create(mockUsers);
-    console.log(`✅ Created ${mockUsers.length} mock users with repeat emails`);
   } catch (error) {
     console.error('❌ Error initializing demo user:', error.message);
   }
@@ -171,55 +84,12 @@ mongoose.connection.once('open', () => {
 const dbHelpers = {
   getAllUsers: async () => {
     try {
-      if (!mongoose.connection.readyState || mongoose.connection.readyState !== 1) {
-        console.log('⚠️  Database not connected, returning mock data');
-        return [
-          {
-            _id: 'mock1',
-            email: 'john@example.com',
-            startTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-            endTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
-            queueJoinTime: new Date(Date.now() - 3 * 60 * 60 * 1000),
-            isActive: false,
-            createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000)
-          },
-          {
-            _id: 'mock2',
-            email: 'jane@example.com',
-            startTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
-            endTime: null,
-            queueJoinTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-            isActive: true,
-            createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000)
-          }
-        ];
-      }
       return await User.find({ 
         email: { $ne: 'demoe@smartclean.se' } 
       }, { password: 0 }).sort({ queueJoinTime: -1 });
     } catch (error) {
       console.error('❌ Error fetching users:', error.message);
-      console.log('⚠️  Returning mock data due to error');
-      return [
-        {
-          _id: 'mock1',
-          email: 'john@example.com',
-          startTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-          endTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
-          queueJoinTime: new Date(Date.now() - 3 * 60 * 60 * 1000),
-          isActive: false,
-          createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000)
-        },
-        {
-          _id: 'mock2',
-          email: 'jane@example.com',
-          startTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
-          endTime: null,
-          queueJoinTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-          isActive: true,
-          createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000)
-        }
-      ];
+      throw error;
     }
   },
 
@@ -388,17 +258,6 @@ const dbHelpers = {
 
   getAnalyticsData: async () => {
     try {
-      if (!mongoose.connection.readyState || mongoose.connection.readyState !== 1) {
-        console.log('⚠️  Database not connected, returning mock analytics');
-        return {
-          totalUsers: 2,
-          activeQueue: 1, // Users in queue waiting to start session
-          repeatUsers: 1,
-          avgSessions: 0,
-          avgQueueWaitTime: 15.5
-        };
-      }
-      
       const demoUserFilter = { email: { $ne: 'demoe@smartclean.se' } };
       
       const totalUsers = await User.countDocuments(demoUserFilter);
@@ -470,14 +329,7 @@ const dbHelpers = {
       };
     } catch (error) {
       console.error('❌ Error fetching analytics:', error.message);
-      console.log('⚠️  Returning mock analytics due to error');
-      return {
-        totalUsers: 2,
-        activeQueue: 1,
-        repeatUsers: 1,
-        avgSessions: 0,
-        avgQueueWaitTime: 15.5
-      };
+      throw error;
     }
   },
 

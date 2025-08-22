@@ -29,6 +29,12 @@
   align-items: flex-start;
 }
 
+.header-left .title-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
 .title-icon {
   font-size: 24px;
   color: var(--primary-color);

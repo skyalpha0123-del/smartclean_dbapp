@@ -11,22 +11,7 @@ router.get('/test', (req, res) => {
   });
 });
 
-router.post('/regenerate-mock', async (req, res) => {
-  try {
-    const { insertDemoUser } = require('../config/database');
-    await insertDemoUser();
-    res.json({
-      success: true,
-      message: 'Mock data regenerated successfully'
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: 'Failed to regenerate mock data',
-      message: error.message
-    });
-  }
-});
+
 
 router.get('/', async (req, res) => {
   try {

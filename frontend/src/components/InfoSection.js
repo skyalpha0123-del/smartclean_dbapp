@@ -74,8 +74,10 @@ const InfoSection = () => {
       <div className="info-container">
         <div className="info-header">
           <div className="header-left">
-            <div className="title-icon">📈</div>
-            <h1 className="section-title">Analytics Overview</h1>
+            <div className="title-section">
+              <div className="title-icon">📈</div>
+              <h1 className="section-title">Analytics Overview</h1>
+            </div>
             <div className="realtime-indicator">
               <span className="indicator-dot"></span>
               <span className="indicator-text">Real-time updates active</span>
