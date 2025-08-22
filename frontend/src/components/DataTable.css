@@ -136,6 +136,27 @@
   font-weight: 500;
   text-align: right;
   min-width: 200px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filter-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-badge {
+  background: var(--primary-color);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .table-wrapper {

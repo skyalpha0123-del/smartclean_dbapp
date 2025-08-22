@@ -85,6 +85,12 @@ const SimpleHeader = () => {
 
 
 const AppContent = () => {
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  const handleFilterChange = (filterType) => {
+    setActiveFilter(filterType);
+  };
+
   return (
     <div className="App">
       <Routes>
@@ -94,8 +100,8 @@ const AppContent = () => {
             <div>
               <SimpleHeader />
               <main className="main-content">
-                <InfoSection />
-                <DataTable />
+                <InfoSection onFilterChange={handleFilterChange} />
+                <DataTable activeFilter={activeFilter} />
               </main>
             </div>
           </ProtectedRoute>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './InfoSection.css';
 
-const InfoSection = () => {
+const InfoSection = ({ onFilterChange }) => {
   const [analyticsData, setAnalyticsData] = useState({
     totalUsers: 0,
     activeQueue: 0,
@@ -15,6 +15,7 @@ const InfoSection = () => {
     }
   });
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState('all');
   const wsRef = useRef(null);
 
   useEffect(() => {
@@ -69,6 +70,13 @@ const InfoSection = () => {
     }
   };
 
+  const handleFilterClick = (filterType) => {
+    setActiveFilter(filterType);
+    if (onFilterChange) {
+      onFilterChange(filterType);
+    }
+  };
+
   return (
     <div className="info-section">
       <div className="info-container">
@@ -94,21 +102,33 @@ const InfoSection = () => {
         </div>
         
         <div className="metrics-grid">
-          <div className="metric-card">
+          <div 
+            className={`metric-card ${activeFilter === 'all' ? 'active' : ''} clickable`}
+            onClick={() => handleFilterClick('all')}
+            title="Click to show all users"
+          >
             <div className="metric-icon">👥</div>
             <div className="metric-label">Total Users</div>
             <div className="metric-value">{loading ? '...' : analyticsData.totalUsers}</div>
             <div className="metric-description">Registered users</div>
           </div>
           
-          <div className="metric-card">
+          <div 
+            className={`metric-card ${activeFilter === 'activeQueue' ? 'active' : ''} clickable`}
+            onClick={() => handleFilterClick('activeQueue')}
+            title="Click to show users in queue"
+          >
             <div className="metric-icon">⏰</div>
             <div className="metric-label">Active Queue</div>
             <div className="metric-value">{loading ? '...' : analyticsData.activeQueue}</div>
             <div className="metric-description">Users waiting to start session</div>
           </div>
           
-          <div className="metric-card">
+          <div 
+            className={`metric-card ${activeFilter === 'repeatUsers' ? 'active' : ''} clickable`}
+            onClick={() => handleFilterClick('repeatUsers')}
+            title="Click to show repeat users"
+          >
             <div className="metric-icon">🔄</div>
             <div className="metric-label">Repeat Users</div>
             <div className="metric-value">{loading ? '...' : analyticsData.repeatUsers}</div>

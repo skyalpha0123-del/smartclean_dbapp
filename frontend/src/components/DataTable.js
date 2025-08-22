@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './DataTable.css';
 
-const DataTable = () => {
+const DataTable = ({ activeFilter = 'all' }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -52,6 +52,10 @@ const DataTable = () => {
     };
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -95,6 +99,19 @@ const DataTable = () => {
 
   const getSortedData = () => {
     let filteredData = data.filter(item => {
+      // Apply filter based on activeFilter
+      let matchesFilter = true;
+      
+      if (activeFilter === 'activeQueue') {
+        // Show only users who joined queue but haven't started session
+        matchesFilter = item.queueJoinTime && !item.startTime;
+      } else if (activeFilter === 'repeatUsers') {
+        // Show only users with multiple entries (we'll need to count occurrences)
+        const emailCount = data.filter(d => d.email === item.email).length;
+        matchesFilter = emailCount >= 2;
+      }
+      // For 'all' filter, matchesFilter remains true
+      
       const matchesText = Object.values(item).some(value => {
         if (value === null || value === undefined) {
           return false;
@@ -102,22 +119,22 @@ const DataTable = () => {
         return value.toString().toLowerCase().includes(filterText.toLowerCase());
       });
 
-                   let matchesDate = true;
-             if (startDate || endDate) {
-               if (item.startTime) {
-                 const itemDate = new Date(item.startTime);
-                 if (startDate && itemDate < new Date(startDate)) {
-                   matchesDate = false;
-                 }
-                 if (endDate && itemDate > new Date(endDate + 'T23:59:59')) {
-                   matchesDate = false;
-                 }
-               } else {
-                 matchesDate = false;
-               }
-             }
+      let matchesDate = true;
+      if (startDate || endDate) {
+        if (item.startTime) {
+          const itemDate = new Date(item.startTime);
+          if (startDate && itemDate < new Date(startDate)) {
+            matchesDate = false;
+          }
+          if (endDate && itemDate > new Date(endDate + 'T23:59:59')) {
+            matchesDate = false;
+          }
+        } else {
+          matchesDate = false;
+        }
+      }
 
-      return matchesText && matchesDate;
+      return matchesFilter && matchesText && matchesDate;
     });
 
     return filteredData.sort((a, b) => {
@@ -235,8 +252,15 @@ const DataTable = () => {
             </div>
           </div>
                            <div className="table-info">
-                   <span>Showing {startIndex + 1}-{Math.min(endIndex, sortedData.length)} of {sortedData.length} records</span>
-                 </div>
+            <span>Showing {startIndex + 1}-{Math.min(endIndex, sortedData.length)} of {sortedData.length} records</span>
+            {activeFilter !== 'all' && (
+              <div className="filter-indicator">
+                <span className="filter-badge">
+                  {activeFilter === 'activeQueue' ? '⏰ Active Queue' : '🔄 Repeat Users'}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
