@@ -77,6 +77,84 @@ async function insertDemoUser() {
   }
 }
 
+async function generateMockData() {
+  try {
+    const bcrypt = require('bcryptjs');
+    
+    // Clear existing mock data
+    await User.deleteMany({ email: { $regex: /^mockuser\d+@example\.com$/ } });
+    console.log('🗑️  Cleared existing mock data');
+    
+    const mockUsers = [];
+    const baseDate = new Date('2025-01-01T00:00:00Z');
+    const usedTimeSlots = new Set();
+    
+    for (let i = 1; i <= 50; i++) {
+      const email = `mockuser${i}@example.com`;
+      const password = bcrypt.hashSync('password123', 10);
+      
+      // Generate queue join time (random time in the last 30 days)
+      const randomDays = Math.random() * 30;
+      const randomHours = Math.random() * 24;
+      const randomMinutes = Math.random() * 60;
+      const queueJoinTime = new Date(baseDate.getTime() + 
+        (randomDays * 24 * 60 * 60 * 1000) + 
+        (randomHours * 60 * 60 * 1000) + 
+        (randomMinutes * 60 * 1000));
+      
+      let startTime = null;
+      let endTime = null;
+      
+      // 70% chance of having a session
+      if (Math.random() < 0.7) {
+        // Generate start time (after queue join time)
+        const startTimeOffset = Math.random() * 30 * 60 * 1000; // 0-30 minutes after queue join
+        startTime = new Date(queueJoinTime.getTime() + startTimeOffset);
+        
+        // Generate end time (within 4 minutes of start time)
+        const sessionDuration = Math.random() * 3.5 * 60 * 1000; // 0-3.5 minutes
+        endTime = new Date(startTime.getTime() + sessionDuration);
+        
+        // Check for overlapping time slots
+        const timeSlotKey = `${startTime.getTime()}-${endTime.getTime()}`;
+        if (usedTimeSlots.has(timeSlotKey)) {
+          // Adjust end time to avoid overlap
+          endTime = new Date(startTime.getTime() + (2 * 60 * 1000)); // 2 minutes session
+        }
+        usedTimeSlots.add(timeSlotKey);
+      }
+      
+      mockUsers.push({
+        email,
+        password,
+        queueJoinTime,
+        startTime,
+        endTime,
+        isActive: startTime && !endTime
+      });
+    }
+    
+    await User.create(mockUsers);
+    console.log(`✅ Generated ${mockUsers.length} mock users with non-overlapping sessions`);
+    
+    return { success: true, count: mockUsers.length };
+  } catch (error) {
+    console.error('❌ Error generating mock data:', error.message);
+    throw error;
+  }
+}
+
+async function clearMockData() {
+  try {
+    const result = await User.deleteMany({ email: { $regex: /^mockuser\d+@example\.com$/ } });
+    console.log(`🗑️  Deleted ${result.deletedCount} mock users`);
+    return { success: true, deletedCount: result.deletedCount };
+  } catch (error) {
+    console.error('❌ Error clearing mock data:', error.message);
+    throw error;
+  }
+}
+
 mongoose.connection.once('open', () => {
   insertDemoUser();
 });
@@ -348,4 +426,4 @@ const dbHelpers = {
   }
 };
 
-module.exports = { mongoose, dbHelpers, insertDemoUser };
+module.exports = { mongoose, dbHelpers, insertDemoUser, generateMockData, clearMockData };

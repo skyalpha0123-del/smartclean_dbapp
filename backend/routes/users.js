@@ -11,6 +11,42 @@ router.get('/test', (req, res) => {
   });
 });
 
+router.post('/mock-up', async (req, res) => {
+  try {
+    const { generateMockData } = require('../config/database');
+    const result = await generateMockData();
+    res.json({
+      success: true,
+      message: `Mock data generated successfully`,
+      data: result
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate mock data',
+      message: error.message
+    });
+  }
+});
+
+router.post('/mock-down', async (req, res) => {
+  try {
+    const { clearMockData } = require('../config/database');
+    const result = await clearMockData();
+    res.json({
+      success: true,
+      message: `Mock data cleared successfully`,
+      data: result
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to clear mock data',
+      message: error.message
+    });
+  }
+});
+
 
 
 router.get('/', async (req, res) => {
