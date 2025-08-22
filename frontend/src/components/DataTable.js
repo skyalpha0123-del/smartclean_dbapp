@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './DataTable.css';
 
@@ -9,13 +9,47 @@ const DataTable = () => {
   const [filterText, setFilterText] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [sortField, setSortField] = useState('email');
-  const [sortDirection, setSortDirection] = useState('asc');
+  const [sortField, setSortField] = useState('queueJoinTime');
+  const [sortDirection, setSortDirection] = useState('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const wsRef = useRef(null);
 
   useEffect(() => {
     fetchData();
+    
+    const wsUrl = `ws://${window.location.hostname}:${window.location.port === '3000' ? '5000' : window.location.port}`;
+    wsRef.current = new WebSocket(wsUrl);
+    
+    wsRef.current.onopen = () => {
+      console.log('WebSocket connected for real-time updates');
+    };
+    
+    wsRef.current.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        if (message.type === 'database_change') {
+          console.log('Database change detected:', message);
+          fetchData();
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+    
+    wsRef.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+    
+    wsRef.current.onclose = () => {
+      console.log('WebSocket disconnected');
+    };
+    
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
   }, []);
 
   const fetchData = async () => {
@@ -152,7 +186,13 @@ const DataTable = () => {
          return (
     <div className="data-table-container">
       <div className="table-header">
-        <h2>Analytics Data</h2>
+        <div className="header-left">
+          <h2>Analytics Data</h2>
+          <div className="realtime-indicator">
+            <span className="indicator-dot"></span>
+            <span className="indicator-text">Real-time updates active</span>
+          </div>
+        </div>
         <div className="table-controls">
           <div className="filters-section">
             <div className="search-box">

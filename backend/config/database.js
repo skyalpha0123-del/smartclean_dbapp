@@ -290,6 +290,10 @@ const dbHelpers = {
         isActive: userData.isActive
       });
       
+      if (global.broadcastDatabaseChange) {
+        global.broadcastDatabaseChange('user_created', { userId: user._id, email: user.email });
+      }
+      
       return {
         id: user._id,
         email: user.email
@@ -321,6 +325,10 @@ const dbHelpers = {
         { new: true, runValidators: true }
       ).select('-password');
       
+      if (global.broadcastDatabaseChange && user) {
+        global.broadcastDatabaseChange('user_updated', { userId: user._id, email: user.email, changes: updateData });
+      }
+      
       return user;
     } catch (error) {
       throw error;
@@ -346,6 +354,11 @@ const dbHelpers = {
         },
         { new: true }
       );
+      
+      if (global.broadcastDatabaseChange && user) {
+        global.broadcastDatabaseChange('session_started', { userId: user._id, email: user.email, startTime: user.startTime });
+      }
+      
       return user;
     } catch (error) {
       throw error;
@@ -362,6 +375,11 @@ const dbHelpers = {
         },
         { new: true }
       );
+      
+      if (global.broadcastDatabaseChange && user) {
+        global.broadcastDatabaseChange('session_ended', { userId: user._id, email: user.email, endTime: user.endTime });
+      }
+      
       return user;
     } catch (error) {
       throw error;

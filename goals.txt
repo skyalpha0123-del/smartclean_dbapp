@@ -1,4 +1,1 @@
-- in mock data, start sessoion time should be exist for all emails.
-- in mock data, some emails should be repeated at least twice.
-
-- remove all comments.
+- When database is changed, I want to see changed data in UI immediately.

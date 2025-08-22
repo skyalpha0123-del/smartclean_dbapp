@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './InfoSection.css';
 
@@ -15,9 +15,43 @@ const InfoSection = () => {
     }
   });
   const [loading, setLoading] = useState(true);
+  const wsRef = useRef(null);
 
   useEffect(() => {
     fetchAnalyticsData();
+    
+    const wsUrl = `ws://${window.location.hostname}:${window.location.port === '3000' ? '5000' : window.location.port}`;
+    wsRef.current = new WebSocket(wsUrl);
+    
+    wsRef.current.onopen = () => {
+      console.log('WebSocket connected for real-time analytics updates');
+    };
+    
+    wsRef.current.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        if (message.type === 'database_change') {
+          console.log('Database change detected, refreshing analytics:', message);
+          fetchAnalyticsData();
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+    
+    wsRef.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+    
+    wsRef.current.onclose = () => {
+      console.log('WebSocket disconnected');
+    };
+    
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
   }, []);
 
   const fetchAnalyticsData = async () => {
@@ -42,6 +76,10 @@ const InfoSection = () => {
           <div className="header-left">
             <div className="title-icon">📈</div>
             <h1 className="section-title">Analytics Overview</h1>
+            <div className="realtime-indicator">
+              <span className="indicator-dot"></span>
+              <span className="indicator-text">Real-time updates active</span>
+            </div>
           </div>
           <div className="header-right">
             <div className={`status-badge ${analyticsData.siteStatus?.isOnline ? 'online' : 'offline'}`}>

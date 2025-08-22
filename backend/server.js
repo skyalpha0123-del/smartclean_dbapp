@@ -4,6 +4,8 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const http = require('http');
+const WebSocket = require('ws');
 
 require('dotenv').config();
 
@@ -15,6 +17,9 @@ const emailService = require('./services/emailService');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
 const trustProxy = process.env.TRUST_PROXY || 1;
 app.set('trust proxy', trustProxy);
@@ -71,7 +76,34 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-app.listen(PORT, async () => {
+const connectedClients = new Set();
+
+wss.on('connection', (ws) => {
+  connectedClients.add(ws);
+  
+  ws.on('close', () => {
+    connectedClients.delete(ws);
+  });
+});
+
+const broadcastDatabaseChange = (changeType, data) => {
+  const message = JSON.stringify({
+    type: 'database_change',
+    changeType,
+    data,
+    timestamp: new Date().toISOString()
+  });
+  
+  connectedClients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
+};
+
+global.broadcastDatabaseChange = broadcastDatabaseChange;
+
+server.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📱 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
   console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
