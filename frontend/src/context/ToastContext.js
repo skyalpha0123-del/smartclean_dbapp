@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import Toast from '../components/Toast';
 
 const ToastContext = createContext();
@@ -14,11 +14,48 @@ export const useToast = () => {
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
-  const addToast = useCallback((message, type = 'info', duration = 5000) => {
+  // Load persistent toasts from localStorage on mount
+  useEffect(() => {
+    const persistentToasts = localStorage.getItem('persistentToasts');
+    if (persistentToasts) {
+      try {
+        const parsedToasts = JSON.parse(persistentToasts);
+        setToasts(parsedToasts);
+        
+        // Clear from localStorage after loading
+        localStorage.removeItem('persistentToasts');
+        
+        // Set up auto-removal for each persistent toast
+        parsedToasts.forEach(toast => {
+          const remainingTime = toast.expiresAt - Date.now();
+          if (remainingTime > 0) {
+            setTimeout(() => {
+              removeToast(toast.id);
+            }, remainingTime);
+          } else {
+            // Remove expired toasts immediately
+            removeToast(toast.id);
+          }
+        });
+      } catch (error) {
+        console.error('Error parsing persistent toasts:', error);
+        localStorage.removeItem('persistentToasts');
+      }
+    }
+  }, []);
+
+  const addToast = useCallback((message, type = 'info', duration = 5000, persistent = false) => {
     const id = Date.now() + Math.random();
-    const newToast = { id, message, type, duration };
+    const expiresAt = Date.now() + duration;
+    const newToast = { id, message, type, duration, expiresAt, persistent };
     
     setToasts(prev => [...prev, newToast]);
+    
+    // If persistent, save to localStorage
+    if (persistent) {
+      const persistentToasts = JSON.stringify([newToast]);
+      localStorage.setItem('persistentToasts', persistentToasts);
+    }
     
     // Auto-remove toast after duration
     setTimeout(() => {
@@ -46,13 +83,28 @@ export const ToastProvider = ({ children }) => {
     addToast(message, 'warning', duration);
   }, [addToast]);
 
+  const showPersistentSuccess = useCallback((message, duration = 5000) => {
+    addToast(message, 'success', duration, true);
+  }, [addToast]);
+
+  const showPersistentError = useCallback((message, duration = 5000) => {
+    addToast(message, 'error', duration, true);
+  }, [addToast]);
+
+  const showPersistentInfo = useCallback((message, duration = 5000) => {
+    addToast(message, 'info', duration, true);
+  }, [addToast]);
+
   const value = {
     addToast,
     removeToast,
     showSuccess,
     showError,
     showInfo,
-    showWarning
+    showWarning,
+    showPersistentSuccess,
+    showPersistentError,
+    showPersistentInfo
   };
 
   return (

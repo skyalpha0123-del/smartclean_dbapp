@@ -253,13 +253,12 @@ const DataTable = ({ activeFilter = 'all' }) => {
           </div>
                            <div className="table-info">
             <span>Showing {startIndex + 1}-{Math.min(endIndex, sortedData.length)} of {sortedData.length} records</span>
-            {activeFilter !== 'all' && (
-              <div className="filter-indicator">
-                <span className="filter-badge">
-                  {activeFilter === 'activeQueue' ? '⏰ Active Queue' : '🔄 Repeat Users'}
-                </span>
-              </div>
-            )}
+            <div className="filter-indicator">
+              <span className="filter-badge">
+                {activeFilter === 'all' ? '👥 Total Users' : 
+                 activeFilter === 'activeQueue' ? '⏰ Active Queue' : '🔄 Repeat Users'}
+              </span>
+            </div>
           </div>
         </div>
       </div>

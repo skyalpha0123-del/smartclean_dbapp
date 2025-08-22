@@ -130,7 +130,7 @@ const DemoUserDialog = ({ user, onClose }) => {
 
 const SimpleHeader = () => {
   const { user, logout } = useAuth();
-  const { showSuccess, showError } = useToast();
+  const { showSuccess, showError, showPersistentSuccess } = useToast();
   const [mockLoading, setMockLoading] = useState(false);
   const [showDemoDialog, setShowDemoDialog] = useState(false);
 
@@ -144,7 +144,7 @@ const SimpleHeader = () => {
         const total = data?.count || 0;
         const unique = data?.uniqueUsers || 0;
         const repeated = data?.repeatedUsers || 0;
-        showSuccess(`Mock data generated successfully! 📊 Total: ${total}, 👤 Unique: ${unique}, 🔄 Repeated: ${repeated}`);
+        showPersistentSuccess(`Mock data generated successfully! 📊 Total: ${total}, 👤 Unique: ${unique}, 🔄 Repeated: ${repeated}`);
         window.location.reload(); // Refresh to show new data
       } else {
         showError('Failed to generate mock data: ' + result.error);
@@ -163,7 +163,7 @@ const SimpleHeader = () => {
       const result = await response.json();
       if (result.success) {
         const deletedCount = result.data?.deletedCount || 0;
-        showSuccess(`Mock data cleared successfully! Deleted ${deletedCount} users.`);
+        showPersistentSuccess(`Mock data cleared successfully! Deleted ${deletedCount} users.`);
         window.location.reload(); // Refresh to show updated data
       } else {
         showError('Failed to clear mock data: ' + result.error);
