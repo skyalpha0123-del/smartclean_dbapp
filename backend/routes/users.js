@@ -262,4 +262,47 @@ router.post('/:id/end-session', async (req, res) => {
   }
 });
 
+router.put('/update-demo', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email is required'
+      });
+    }
+
+    // Find the demo user
+    const demoUser = await dbHelpers.getUserByEmail('demoe@smartclean.se');
+    if (!demoUser) {
+      return res.status(404).json({
+        success: false,
+        error: 'Demo user not found'
+      });
+    }
+
+    // Update the demo user
+    const updateData = { email };
+    if (password && password.length >= 6) {
+      const bcrypt = require('bcryptjs');
+      updateData.password = bcrypt.hashSync(password, 10);
+    }
+
+    const updatedUser = await dbHelpers.updateUserFields(demoUser._id, updateData);
+    
+    res.json({
+      success: true,
+      data: updatedUser,
+      message: 'Demo user updated successfully'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update demo user',
+      message: error.message
+    });
+  }
+});
+
 module.exports = router;

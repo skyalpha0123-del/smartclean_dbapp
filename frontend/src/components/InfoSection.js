@@ -96,7 +96,7 @@ const InfoSection = ({ onFilterChange }) => {
               {analyticsData.siteStatus?.isOnline ? 'Online' : 'Offline'}
             </div>
             <div className="summary-text">
-              Total Sessions: {analyticsData.totalUsers} | User Engagement: {analyticsData.repeatUsers > 0 ? Math.round((analyticsData.repeatUsers / analyticsData.totalUsers) * 100) : 0}% repeat rate
+              Total Users: {analyticsData.totalUsers} | User Engagement: {analyticsData.repeatUsers > 0 ? Math.round((analyticsData.repeatUsers / analyticsData.totalUsers) * 100) : 0}% repeat rate
             </div>
           </div>
         </div>
