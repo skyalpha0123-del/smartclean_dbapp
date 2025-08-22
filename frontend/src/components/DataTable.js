@@ -50,7 +50,7 @@ const DataTable = ({ activeFilter = 'all' }) => {
   useEffect(() => {
     setCurrentPage(1);
     if (activeFilter === 'avgSessionTime') {
-      setSortField('averageSessionTime');
+      setSortField('totalSessionTime');
       setSortDirection('desc');
     } else {
       setSortField('queueJoinTime');
