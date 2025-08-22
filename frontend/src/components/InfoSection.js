@@ -128,7 +128,11 @@ const InfoSection = ({ onFilterChange }) => {
             <div className="metric-description">Users with 2+ sessions</div>
           </div>
           
-          <div className="metric-card">
+          <div 
+            className={`metric-card ${activeFilter === 'avgSessionTime' ? 'active' : ''} clickable`}
+            onClick={() => handleFilterClick('avgSessionTime')}
+            title="Click to show average session times per user"
+          >
             <div className="metric-icon">📊</div>
             <div className="metric-label">Avg Session Time</div>
             <div className="metric-value">{loading ? '...' : `${analyticsData.avgSessions.toFixed(1)} min`}</div>

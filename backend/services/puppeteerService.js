@@ -598,6 +598,10 @@ class PuppeteerService {
           await this.handleSessionEnd(username, timestamp);
           break;
           
+        case 'QUEUE_CANCEL':
+          await this.handleQueueCancel(username, timestamp);
+          break;
+          
         default:
           console.log(`⚠️  Unknown action type: ${actionType}`);
       }
@@ -696,6 +700,32 @@ class PuppeteerService {
       
     } catch (error) {
       console.error(`❌ Error handling SESSION_END for ${username}:`, error.message);
+    }
+  }
+
+  async handleQueueCancel(username, timestamp) {
+    try {
+      console.log(`❌ Processing QUEUE_CANCEL for user: ${username}`);
+      
+      const email = `${username}@smartclean.se`;
+      // Find the active user record (most recent incomplete session)
+      const user = await dbHelpers.getActiveUserByEmail(email);
+      
+      if (user) {
+        console.log(`📝 Found active user record for ${username}, updating for queue cancel`);
+        // Update endTime to current time and set startTime to null
+        await dbHelpers.updateUserFields(user._id, {
+          endTime: timestamp,
+          startTime: null,
+          isActive: false
+        });
+        console.log(`✅ Updated user ${username} for queue cancel`);
+      } else {
+        console.log(`⚠️  No active user record found for ${username} in QUEUE_CANCEL`);
+      }
+      
+    } catch (error) {
+      console.error(`❌ Error handling QUEUE_CANCEL for ${username}:`, error.message);
     }
   }
 

@@ -49,23 +49,51 @@ const DataTable = ({ activeFilter = 'all' }) => {
 
   useEffect(() => {
     setCurrentPage(1);
+    if (activeFilter === 'avgSessionTime') {
+      setSortField('averageSessionTime');
+      setSortDirection('desc');
+    } else {
+      setSortField('queueJoinTime');
+      setSortDirection('desc');
+    }
+    fetchData();
   }, [activeFilter]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/users');
-      const userData = response.data.data || [];
       
-      const sanitizedData = userData.map(user => ({
-        id: user._id || user.id || null,
-        email: user.email || '',
-        startTime: user.startTime || null,
-        endTime: user.endTime || null,
-        queueJoinTime: user.queueJoinTime || null
-      }));
+      if (activeFilter === 'avgSessionTime') {
+        const response = await axios.get('/api/users/average-session-times');
+        const avgData = response.data.data || [];
+        
+        const sanitizedData = avgData.map(user => ({
+          id: null,
+          email: user.email || '',
+          averageSessionTime: user.averageSessionTime || 0,
+          totalSessions: user.totalSessions || 0,
+          totalSessionTime: user.totalSessionTime || 0,
+          startTime: null,
+          endTime: null,
+          queueJoinTime: null
+        }));
+        
+        setData(sanitizedData);
+      } else {
+        const response = await axios.get('/api/users');
+        const userData = response.data.data || [];
+        
+        const sanitizedData = userData.map(user => ({
+          id: user._id || user.id || null,
+          email: user.email || '',
+          startTime: user.startTime || null,
+          endTime: user.endTime || null,
+          queueJoinTime: user.queueJoinTime || null
+        }));
+        
+        setData(sanitizedData);
+      }
       
-      setData(sanitizedData);
       setError(null);
     } catch (err) {
       if (err.code === 'ECONNREFUSED' || err.message.includes('Network Error')) {
@@ -94,7 +122,10 @@ const DataTable = ({ activeFilter = 'all' }) => {
       let matchesFilter = true;
       
       if (activeFilter === 'activeQueue') {
-        matchesFilter = item.queueJoinTime && !item.startTime;
+        matchesFilter = item.queueJoinTime && (
+          (item.startTime && item.endTime === null) || 
+          (item.startTime === null && item.endTime === null)
+        );
       } else if (activeFilter === 'repeatUsers') {
         const emailCount = data.filter(d => d.email === item.email).length;
         matchesFilter = emailCount >= 2;
@@ -244,7 +275,8 @@ const DataTable = ({ activeFilter = 'all' }) => {
             <div className="filter-indicator">
               <span className="filter-badge">
                 {activeFilter === 'all' ? '👥 Total Users' : 
-                 activeFilter === 'activeQueue' ? '⏰ Active Queue' : '🔄 Repeat Users'}
+                 activeFilter === 'activeQueue' ? '⏰ Active Queue' : 
+                 activeFilter === 'repeatUsers' ? '🔄 Repeat Users' : '📊 Avg Session Times'}
               </span>
             </div>
           </div>
@@ -260,35 +292,61 @@ const DataTable = ({ activeFilter = 'all' }) => {
       ) : (
         <div className="table-wrapper">
           <table className="data-table">
-                             <thead>
-                   <tr>
-                     <th onClick={() => handleSort('email')} className="sortable">
-                       Email {renderSortIcon('email')}
-                     </th>
-                     <th onClick={() => handleSort('queueJoinTime')} className="sortable">
-                       Queue Join Time {renderSortIcon('queueJoinTime')}
-                     </th>
-                <th onClick={() => handleSort('startTime')} className="sortable">
-                  Start Time {renderSortIcon('startTime')}
+            <thead>
+              <tr>
+                <th onClick={() => handleSort('email')} className="sortable">
+                  Email {renderSortIcon('email')}
                 </th>
-                                 <th onClick={() => handleSort('endTime')} className="sortable">
-                   End Time {renderSortIcon('endTime')}
-                 </th>
+                {activeFilter === 'avgSessionTime' ? (
+                  <>
+                    <th onClick={() => handleSort('averageSessionTime')} className="sortable">
+                      Average Session Time (min) {renderSortIcon('averageSessionTime')}
+                    </th>
+                    <th onClick={() => handleSort('totalSessions')} className="sortable">
+                      Total Sessions {renderSortIcon('totalSessions')}
+                    </th>
+                    <th onClick={() => handleSort('totalSessionTime')} className="sortable">
+                      Total Time (min) {renderSortIcon('totalSessionTime')}
+                    </th>
+                  </>
+                ) : (
+                  <>
+                    <th onClick={() => handleSort('queueJoinTime')} className="sortable">
+                      Queue Join Time {renderSortIcon('queueJoinTime')}
+                    </th>
+                    <th onClick={() => handleSort('startTime')} className="sortable">
+                      Start Time {renderSortIcon('startTime')}
+                    </th>
+                    <th onClick={() => handleSort('endTime')} className="sortable">
+                      End Time {renderSortIcon('endTime')}
+                    </th>
+                  </>
+                )}
               </tr>
             </thead>
-                               <tbody>
-                     {currentData.map((item) => (
-                       <tr key={item.id || item._id}>
-                         <td>{item.email || 'N/A'}</td>
-                         <td>
-                           {item.queueJoinTime ? new Date(item.queueJoinTime).toLocaleString() : 'Not joined'}
-                         </td>
-                  <td>
-                    {item.startTime ? new Date(item.startTime).toLocaleString() : 'Not started'}
-                  </td>
-                                     <td>
-                     {item.endTime ? new Date(item.endTime).toLocaleString() : ''}
-                   </td>
+            <tbody>
+              {currentData.map((item, index) => (
+                <tr key={item.id || item.email || index}>
+                  <td>{item.email || 'N/A'}</td>
+                  {activeFilter === 'avgSessionTime' ? (
+                    <>
+                      <td>{item.averageSessionTime ? item.averageSessionTime.toFixed(2) : '0.00'}</td>
+                      <td>{item.totalSessions || 0}</td>
+                      <td>{item.totalSessionTime ? item.totalSessionTime.toFixed(2) : '0.00'}</td>
+                    </>
+                  ) : (
+                    <>
+                      <td>
+                        {item.queueJoinTime ? new Date(item.queueJoinTime).toLocaleString() : 'Not joined'}
+                      </td>
+                      <td>
+                        {item.startTime ? new Date(item.startTime).toLocaleString() : 'Not started'}
+                      </td>
+                      <td>
+                        {item.endTime ? new Date(item.endTime).toLocaleString() : ''}
+                      </td>
+                    </>
+                  )}
                 </tr>
               ))}
             </tbody>

@@ -67,6 +67,27 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/average-session-times', async (req, res) => {
+  try {
+    console.log('🚀 /average-session-times route called');
+    const userAverages = await dbHelpers.getUserAverageSessionTimes();
+    
+    console.log(`📊 Sending ${userAverages.length} user averages`);
+    res.json({
+      success: true,
+      data: userAverages,
+      count: userAverages.length
+    });
+  } catch (error) {
+    console.error('❌ Error in /average-session-times route:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch user average session times',
+      message: error.message
+    });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;

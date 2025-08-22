@@ -7,8 +7,10 @@ mongoose.connect(MONGODB_URI, {
   useUnifiedTopology: true,
 })
 .then(() => {
+  console.log('✅ Connected to MongoDB successfully');
 })
 .catch((error) => {
+  console.error('❌ MongoDB connection error:', error.message);
 });
 
 const userSchema = new mongoose.Schema({
@@ -362,8 +364,8 @@ const dbHelpers = {
         ...demoUserFilter, 
         queueJoinTime: { $exists: true, $ne: null },
         $or: [
-          { startTime: { $exists: false } },
-          { startTime: null }
+          { startTime: { $exists: true, $ne: null }, endTime: null },
+          { startTime: null, endTime: null }
         ]
       });
       
@@ -422,6 +424,63 @@ const dbHelpers = {
         avgQueueWaitTime: Math.round(avgQueueWaitTime * 100) / 100
       };
     } catch (error) {
+      throw error;
+    }
+  },
+
+  getUserAverageSessionTimes: async () => {
+    try {
+      console.log('🔍 Starting getUserAverageSessionTimes...');
+      const demoUserFilter = { email: { $ne: 'demoe@smartclean.se' } };
+      
+      const usersWithCompletedSessions = await User.find({
+        ...demoUserFilter,
+        startTime: { $exists: true, $ne: null },
+        endTime: { $exists: true, $ne: null }
+      });
+      
+      console.log(`📊 Found ${usersWithCompletedSessions.length} users with completed sessions`);
+      
+      const userSessionMap = new Map();
+      
+      usersWithCompletedSessions.forEach(user => {
+        if (user.startTime && user.endTime) {
+          const sessionTime = user.endTime.getTime() - user.startTime.getTime();
+          const sessionTimeMinutes = sessionTime / (1000 * 60);
+          
+          if (!userSessionMap.has(user.email)) {
+            userSessionMap.set(user.email, {
+              email: user.email,
+              totalSessionTime: 0,
+              sessionCount: 0,
+              sessions: []
+            });
+          }
+          
+          const userData = userSessionMap.get(user.email);
+          userData.totalSessionTime += sessionTimeMinutes;
+          userData.sessionCount += 1;
+          userData.sessions.push({
+            startTime: user.startTime,
+            endTime: user.endTime,
+            duration: sessionTimeMinutes
+          });
+        }
+      });
+      
+      const usersWithAverage = Array.from(userSessionMap.values()).map(userData => ({
+        email: userData.email,
+        averageSessionTime: Math.round((userData.totalSessionTime / userData.sessionCount) * 100) / 100,
+        totalSessions: userData.sessionCount,
+        totalSessionTime: Math.round(userData.totalSessionTime * 100) / 100
+      }));
+      
+      usersWithAverage.sort((a, b) => b.averageSessionTime - a.averageSessionTime);
+      
+      console.log(`✅ Returning ${usersWithAverage.length} users with average session times`);
+      return usersWithAverage;
+    } catch (error) {
+      console.error('❌ Error in getUserAverageSessionTimes:', error.message);
       throw error;
     }
   },
