@@ -18,7 +18,8 @@ const SimpleHeader = () => {
       const response = await fetch('/api/users/mock-up', { method: 'POST' });
       const result = await response.json();
       if (result.success) {
-        alert(`Mock data generated successfully! Created ${result.data.count} users.`);
+        const data = result.data;
+        alert(`Mock data generated successfully!\n\n📊 Total Users: ${data.count}\n👤 Unique Users: ${data.uniqueUsers}\n🔄 Repeated Users: ${data.repeatedUsers}\n📧 Repeated Emails: ${data.repeatedEmails.join(', ')}`);
         window.location.reload(); // Refresh to show new data
       } else {
         alert('Failed to generate mock data: ' + result.error);
@@ -61,7 +62,7 @@ const SimpleHeader = () => {
             onClick={handleMockUp} 
             disabled={mockLoading}
             className="btn btn-primary btn-small"
-            title="Generate 50 mock users with non-overlapping sessions"
+            title="Generate 30 unique + 20 repeated mock users with non-overlapping sessions"
           >
             {mockLoading ? 'Loading...' : 'Mock Up'}
           </button>

@@ -89,7 +89,8 @@ async function generateMockData() {
     const baseDate = new Date('2025-01-01T00:00:00Z');
     const usedTimeSlots = new Set();
     
-    for (let i = 1; i <= 50; i++) {
+    // Create base users (30 unique users)
+    for (let i = 1; i <= 30; i++) {
       const email = `mockuser${i}@example.com`;
       const password = bcrypt.hashSync('password123', 10);
       
@@ -134,10 +135,59 @@ async function generateMockData() {
       });
     }
     
-    await User.create(mockUsers);
-    console.log(`✅ Generated ${mockUsers.length} mock users with non-overlapping sessions`);
+    // Create repeated users (20 additional entries with repeated emails)
+    const repeatedEmails = ['mockuser1@example.com', 'mockuser2@example.com', 'mockuser3@example.com', 'mockuser4@example.com', 'mockuser5@example.com'];
     
-    return { success: true, count: mockUsers.length };
+    for (let i = 0; i < 20; i++) {
+      const email = repeatedEmails[i % repeatedEmails.length]; // Cycle through repeated emails
+      const password = bcrypt.hashSync('password123', 10);
+      
+      // Generate queue join time (random time in the last 30 days)
+      const randomDays = Math.random() * 30;
+      const randomHours = Math.random() * 24;
+      const randomMinutes = Math.random() * 60;
+      const queueJoinTime = new Date(baseDate.getTime() + 
+        (randomDays * 24 * 60 * 60 * 1000) + 
+        (randomHours * 60 * 60 * 1000) + 
+        (randomMinutes * 60 * 1000));
+      
+      // For repeated users, ALWAYS have all time fields filled
+      const startTimeOffset = Math.random() * 30 * 60 * 1000; // 0-30 minutes after queue join
+      const startTime = new Date(queueJoinTime.getTime() + startTimeOffset);
+      
+      // Generate end time (within 4 minutes of start time)
+      const sessionDuration = Math.random() * 3.5 * 60 * 1000; // 0-3.5 minutes
+      const endTime = new Date(startTime.getTime() + sessionDuration);
+      
+      // Check for overlapping time slots
+      const timeSlotKey = `${startTime.getTime()}-${endTime.getTime()}`;
+      if (usedTimeSlots.has(timeSlotKey)) {
+        // Adjust end time to avoid overlap
+        endTime = new Date(startTime.getTime() + (2 * 60 * 1000)); // 2 minutes session
+      }
+      usedTimeSlots.add(timeSlotKey);
+      
+      mockUsers.push({
+        email,
+        password,
+        queueJoinTime,
+        startTime,
+        endTime,
+        isActive: false // Completed sessions
+      });
+    }
+    
+    await User.create(mockUsers);
+    console.log(`✅ Generated ${mockUsers.length} mock users (30 unique + 20 repeated) with non-overlapping sessions`);
+    console.log(`📊 Repeated users: ${repeatedEmails.length} emails repeated multiple times`);
+    
+    return { 
+      success: true, 
+      count: mockUsers.length,
+      uniqueUsers: 30,
+      repeatedUsers: 20,
+      repeatedEmails: repeatedEmails
+    };
   } catch (error) {
     console.error('❌ Error generating mock data:', error.message);
     throw error;
