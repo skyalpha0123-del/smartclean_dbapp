@@ -416,6 +416,7 @@ class PuppeteerService {
         console.log('❌ Email input field not found');
       }
 
+      await page.waitForSelector('button[class*="inline-flex items-center justify-center gap-2 whitespace-nowrap"]', { timeout: 30000 });
       const adminBtn = await page.$$('button[class *= "inline-flex items-center justify-center gap-2 whitespace-nowrap"]');
       await adminBtn[0].click();
       
