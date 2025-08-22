@@ -196,7 +196,7 @@ const dbHelpers = {
       }
       return await User.find({ 
         email: { $ne: 'demoe@smartclean.se' } 
-      }, { password: 0 }).sort({ createdAt: -1 });
+      }, { password: 0 }).sort({ queueJoinTime: -1 });
     } catch (error) {
       console.error('❌ Error fetching users:', error.message);
       console.log('⚠️  Returning mock data due to error');
