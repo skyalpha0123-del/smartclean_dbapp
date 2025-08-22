@@ -354,37 +354,67 @@ const DataTable = ({ activeFilter = 'all' }) => {
         </div>
       )}
       
-      {totalPages > 1 && (
-        <div className="pagination">
-          <button 
-            onClick={() => handlePageChange(currentPage - 1)} 
-            disabled={currentPage === 1}
-            className="btn btn-secondary btn-small"
-          >
-            Previous
-          </button>
-          
-          <div className="page-numbers">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <button
-                key={page}
-                onClick={() => handlePageChange(page)}
-                className={`btn btn-small ${currentPage === page ? 'btn-primary' : 'btn-secondary'}`}
-              >
-                {page}
-              </button>
-            ))}
-          </div>
-          
-          <button 
-            onClick={() => handlePageChange(currentPage + 1)} 
-            disabled={currentPage === totalPages}
-            className="btn btn-secondary btn-small"
-          >
-            Next
-          </button>
-        </div>
-      )}
+             {totalPages > 1 && (
+         <div className="pagination">
+           <button 
+             onClick={() => handlePageChange(1)} 
+             disabled={currentPage === 1}
+             className="btn btn-secondary btn-small"
+             title="Go to first page"
+           >
+             &lt;&lt;
+           </button>
+           
+           <button 
+             onClick={() => handlePageChange(currentPage - 1)} 
+             disabled={currentPage === 1}
+             className="btn btn-secondary btn-small"
+             title="Previous page"
+           >
+             &lt;
+           </button>
+           
+           <div className="page-numbers">
+             {(() => {
+               const pages = [];
+               const startPage = Math.max(1, currentPage - 2);
+               const endPage = Math.min(totalPages, currentPage + 2);
+               
+               for (let i = startPage; i <= endPage; i++) {
+                 pages.push(i);
+               }
+               
+               return pages.map(page => (
+                 <button
+                   key={page}
+                   onClick={() => handlePageChange(page)}
+                   className={`btn btn-small ${currentPage === page ? 'btn-primary' : 'btn-secondary'}`}
+                 >
+                   {page}
+                 </button>
+               ));
+             })()}
+           </div>
+           
+           <button 
+             onClick={() => handlePageChange(currentPage + 1)} 
+             disabled={currentPage === totalPages}
+             className="btn btn-secondary btn-small"
+             title="Next page"
+           >
+             &gt;
+           </button>
+           
+           <button 
+             onClick={() => handlePageChange(totalPages)} 
+             disabled={currentPage === totalPages}
+             className="btn btn-secondary btn-small"
+             title="Go to last page"
+           >
+             &gt;&gt;
+           </button>
+         </div>
+       )}
     </div>
   );
 };
